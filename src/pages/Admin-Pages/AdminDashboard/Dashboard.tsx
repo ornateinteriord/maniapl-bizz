@@ -1,4 +1,4 @@
-import {  Card, CardContent, Grid, Typography } from '@mui/material';
+import { Card, CardContent, Grid, Typography } from '@mui/material';
 import { cn } from '../../../lib/utils';
 import '../../Dashboard/dashboard.scss';
 import DashboardTable from '../../Dashboard/DashboardTable';
@@ -9,31 +9,45 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import EventIcon from '@mui/icons-material/Event';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { useGetAllMembersDetails } from '../../../api/Admin';
+
 
 const AdminDashboard = () => { 
+  const { data: members = [], isLoading, error } = useGetAllMembersDetails();
 
-  const data = [
-    {
-      date: "2023-10-01",
-      member: "Arjun Patel",
-      packageAmount: 100,
-    },
-    {
-      date: "2023-10-02", 
-      member: "Priya Sharma",
-      packageAmount: 150,
-    },
-    {
-      date: "2023-10-03",
-      member: "Rahul Kumar",
-      packageAmount: 200,
-    },
-  ];
+  // Sort members by most recent registration date
+  const sortedMembers = [...members].sort((a, b) => {
+    return new Date(b.createdAt || b.Date_of_joining).getTime() - 
+           new Date(a.createdAt || a.Date_of_joining).getTime();
+  });
+
+
+const totalMembers = members.length;
+const activeMembers = members.filter((member: any) => member.status === 'active' || member.isActive).length;
+const pendingMembers = members.filter((member: any) => member.status === 'Pending' || !member.isActive).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Typography>Loading dashboard data...</Typography>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Typography color="error">
+          Error loading dashboard data: {error.message}
+        </Typography>
+      </div>
+    );
+  }
 
   return (
     <>
-      <div className="h-auto md:h-40 relative w-full overflow-hidden bg-slate-900 flex flex-col items-center justify-center mt-10 py-6 md:py-0">
-        <div className="absolute inset-0 w-full h-full bg-slate-900 z-20 [mask-image:radial-gradient(transparent,white)] pointer-events-none" />
+      <div className="h-auto md:h-40 relative w-full overflow-hidden bg-[#6b21a8] flex flex-col items-center justify-center mt-10 py-6 md:py-0">
+        <div className="absolute inset-0 w-full h-full bg-[#6b21a8] z-20 [mask-image:radial-gradient(transparent,white)] pointer-events-none" />
 
         <div className="flex flex-col md:flex-row justify-evenly items-center w-full px-4 md:px-8 relative z-20 gap-6 md:gap-0">
           <div className="text-center md:text-left">
@@ -77,14 +91,15 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+      
       <Grid 
         container 
         spacing={{ xs: 2, sm: 3 }} 
         sx={{ 
           mx: { xs: 1, sm: 2 }, 
           my: 2,
-          pt : 5,
-          pr : 7,
+          pt: 5,
+          pr: 7,
           width: 'auto',
           '& .MuiGrid-item': {
             display: 'flex',
@@ -92,22 +107,43 @@ const AdminDashboard = () => {
         }}
       >
         <Grid item xs={12} sm={6} md={4}>
-          <DashboardCard amount={2} title="Total Members" subTitle="12 More members added" IconComponent={PersonIcon} />
+          <DashboardCard 
+            amount={totalMembers} 
+            title="Total Members" 
+            subTitle={`${totalMembers} members in total`} 
+            IconComponent={PersonIcon} 
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <DashboardCard amount={2} title="Active Members" subTitle="5 More members activated" IconComponent={PersonIcon} />
+          <DashboardCard 
+            amount={activeMembers} 
+            title="Active Members" 
+            subTitle={`${activeMembers} active members`} 
+            IconComponent={PersonIcon} 
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <DashboardCard amount={0} title="Pending Members" IconComponent={PersonIcon} />
+          <DashboardCard 
+            amount={pendingMembers} 
+            title="Pending Members" 
+            subTitle={`${pendingMembers} pending activation`} 
+            IconComponent={PersonIcon} 
+          />
         </Grid>
       </Grid>
+      
       <div className='mt-10 p-4 rounded shadow'>    
         <Card className='bg-gray-300'>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
-              <Typography variant="h6" style={{ fontWeight: 'bold', color: '#7e22ce' }}>Member Statistics</Typography>
+              <Typography variant="h6" style={{ fontWeight: 'bold', color: '#7e22ce' }}>
+                Member Statistics ({sortedMembers.length} members)
+              </Typography>
             </div>
-            <DashboardTable data={data} columns={getAdminDashboardTableColumns()} />
+            <DashboardTable 
+              data={sortedMembers} 
+              columns={getAdminDashboardTableColumns()} 
+            />
           </CardContent>
         </Card>
       </div>

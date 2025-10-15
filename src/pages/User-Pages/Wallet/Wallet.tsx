@@ -201,7 +201,7 @@ const Wallet = () => {
             },
           }}
         >
-          <AccordionSummary
+          {/* <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
               backgroundColor: "#7e22ce",
@@ -211,7 +211,7 @@ const Wallet = () => {
             }}
           >
             Wallet Overview
-          </AccordionSummary>
+          </AccordionSummary> */}
           <AccordionDetails>
             <Grid container spacing={3} sx={{ mb: 3 }}>
               <Grid item xs={12} md={4}>

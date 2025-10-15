@@ -50,7 +50,7 @@ export const get = async (path: string, params?: Record<string, any>) => {
     throw error;
   }
 };
-export const put = async (path: string, data: any) => {
+export const put = async (path: string, data ?: any) => {
   try {
     const response = await api.put(path, data);
     return response.data;

@@ -10,18 +10,21 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import {  useState } from "react";
 import "./Payout.scss";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DataTable from "react-data-table-component";
-import { DASHBOARD_CUTSOM_STYLE, getPayblesColumns, getProccessedColumns, getRequestColumns } from "../../../utils/DataTableColumnsProvider";
+import { DASHBOARD_CUTSOM_STYLE, getProccessedColumns, getRequestColumns,   } from "../../../utils/DataTableColumnsProvider";
+import { useApproveWithdrawal, useGetApprovedWithdrawals, useGetPendingWithdrawals } from "../../../api/Admin";
 
 
 interface PayoutTableProps{
   data:any[];
   columns:any;
   tabTitle:any[];
+  loading?:boolean;
 }
+
 
 const Payout = () => {
   const [value, setValue] = useState(0);
@@ -35,8 +38,6 @@ const Payout = () => {
         return <Requests tabTitle={"Requests"}/>;
       case 1:
         return <Proccessed tabTitle={"Proccessed"}/>;
-      case 2:
-        return <Paybles  tabTitle={"Paybles"}/>;
     }
   };
   return (
@@ -56,7 +57,6 @@ const Payout = () => {
             >
               <Tab className="tab-list-1" label="Requests" />
               <Tab className="tab-list-2" label="Proccessed" />
-              <Tab className="tab-list-3" label="Payables" />
             </Tabs>
             <Box className="tab-content">{renderContent()}</Box>
           </Box>
@@ -69,7 +69,7 @@ const Payout = () => {
 
 export default Payout;
 
-const PayoutTable= ({data,columns,tabTitle}:PayoutTableProps)=>{
+const PayoutTable= ({data,columns,tabTitle,loading}:PayoutTableProps)=>{
   return(
     <Accordion defaultExpanded>
     <AccordionSummary
@@ -104,6 +104,7 @@ const PayoutTable= ({data,columns,tabTitle}:PayoutTableProps)=>{
         pagination
         customStyles={DASHBOARD_CUTSOM_STYLE}
         paginationPerPage={25}
+        progressPending={loading}
         paginationRowsPerPageOptions={[25, 50, 100]}
         highlightOnHover
         noDataComponent={<div>No data available</div>}
@@ -115,67 +116,28 @@ const PayoutTable= ({data,columns,tabTitle}:PayoutTableProps)=>{
 
 export const Requests = ({ tabTitle }: { tabTitle:any})=>{
 
-  const Data = [
-    {
-     date: "2024-03-01",
-     Member: "John Doe",
-     mobileno: "9876543210",
-     account: "1234567890",
-     ifsc: "HDFC0001234",
-     amount: "$100",
-     deduction: "$5",
-     status: "Pending",
-     action: "Approve",
- }
- ]
+  const {data:pending = [] , isFetching} = useGetPendingWithdrawals();
+  const {mutate : approveTrasaction, isPending} = useApproveWithdrawal()
   return (
     <PayoutTable
-    data={Data}
-    columns={getRequestColumns()}
+    data={pending?.length > 0 ? pending : []}
+    columns={getRequestColumns(approveTrasaction)}
     tabTitle={tabTitle} 
+    loading={isFetching || isPending}
     />
   )
 }
 
 export const  Proccessed =({ tabTitle }: { tabTitle:any})=>{
-  const Data = [
-    {
-     date: "2024-03-01",
-     Member: "John Doe",
-     mobileno: "9876543210",
-     account: "1234567890",
-     ifsc: "HDFC0001234",
-     amount: "$100",
-     deducted: "$5",
-     Paidon: "Pending",
-    
- }
- ]
+  
+  const {data:Approved , isFetching,} = useGetApprovedWithdrawals()
+
   return (
     <PayoutTable
-    data={Data}
+    data={Approved}
     columns={getProccessedColumns()}
     tabTitle={tabTitle} 
-    />
-  )
-}
-export const  Paybles =({ tabTitle }: { tabTitle:any})=>{
-  const Data = [
-    {
-     date: "2024-03-01",
-     Member: "John Doe",
-     mobileno: "9876543210",
-     account: "1234567890",
-     ifsc: "HDFC0001234",
-     amount: "$100",
-     action: "Approve",
- }
- ]
-  return (
-    <PayoutTable
-    data={Data}
-    columns={getPayblesColumns()}
-    tabTitle={tabTitle} 
+    loading={isFetching}
     />
   )
 }
