@@ -24,7 +24,8 @@ import TokenService from "../../api/token/tokenService";
 import { deepOrange } from "@mui/material/colors";
 import { useContext, useState } from "react";
 import UserContext from "../../context/user/userContext";
-import { getFormattedName } from "../../utils/common";
+import { getFormattedDate } from "../../utils/common";
+
 
 const Navbar = ({
   toggelSideBar,
@@ -150,7 +151,7 @@ const Navbar = ({
               {user?.username ? user.username.charAt(0).toUpperCase() : ""}
             </Avatar>
             <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-              {getFormattedName(user?.username)}
+              {getFormattedDate(user?.username)}
             </Typography>
           </div>
           <Divider />

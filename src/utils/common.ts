@@ -11,17 +11,28 @@ export const getFormattedDate = (date: Date | string) => {
         "MM/DD/YYYY",      // Handles "02/14/2025" (US format)
         "MMMM D, YYYY",    // Handles "February 14, 2025"
         "MMM D, YYYY",     // Handles "Feb 14, 2025"
-        "D MMM YYYY"       // Handles "14 Feb 2025" (without comma)
+        "D MMM YYYY",      // Handles "14 Feb 2025" (without comma)
+        "ddd MMM DD YYYY HH:mm:ss [GMT]ZZ" // Handles "Fri Oct 10 2025 17:45:54 GMT+0530"
     ];
     
-    if (!date) return "-"; // Handle empty/null values
+    if (!date) return "-";
 
+    // Handle MongoDB Date objects
+    if (date instanceof Date) {
+        return moment(date).format("DD MMM , YYYY");
+    }
+
+    // Handle string dates
     const parsedDate = moment(date, dateformats, true);
     
-    return parsedDate.isValid() ? parsedDate.format("DD MMM , YYYY") : "Invalid Date";
+    // If moment can't parse it, try creating a new Date object
+    if (!parsedDate.isValid()) {
+        const jsDate = new Date(date);
+        if (!isNaN(jsDate.getTime())) {
+            return moment(jsDate).format("DD MMM , YYYY");
+        }
+        return "Invalid Date";
+    }
+    
+    return parsedDate.format("DD MMM , YYYY");
 };
-
-
-export const getFormattedName = (name: string) => {
-    return name?.split(" ")?.map((word) => word?.charAt(0)?.toUpperCase() + word?.slice(1))?.join(" ");
-}

@@ -210,26 +210,15 @@ export const getTransactionColumns = () => [
   },
   {
     name: "Credits",
-    selector: (row: any) => `₹ ${row.ew_credit}`,
-    sortable: true,
-  },
-  {
-    name: "Debit",
     selector: (row: any) => `₹ ${row.ew_debit}`,
     sortable: true,
   },
   {
-    name: "Withdrawal Amount",
-    selector: (row: any) => row.ew_debit,
+    name: "Debit",
+    selector: (row: any) => `₹ ${row.net_amount}`,
     sortable: true,
-    cell: (row: any) => {
-      // For withdrawal transactions, show the actual withdrawal amount
-      if (row.transaction_type === "Withdrawal" && parseFloat(row.ew_debit) > 0) {
-        return `₹ ${parseFloat(row.ew_debit).toFixed(2)}`;
-      }
-      return "-";
-    }
   },
+ 
   {
     name: "TDS (15%)",
     selector: (row: any) => row.deduction,
@@ -244,20 +233,20 @@ export const getTransactionColumns = () => [
       return "-";
     }
   },
-  {
-    name: "Net Received",
-    selector: (row: any) => row.net_amount,
-    sortable: true,
-    cell: (row: any) => {
-      // Calculate net amount for withdrawal transactions
-      if (row.transaction_type === "Withdrawal" && parseFloat(row.ew_debit) > 0) {
-        const withdrawalAmount = parseFloat(row.ew_debit);
-        const netAmount = withdrawalAmount * 0.85; // 85% after 15% TDS
-        return `₹ ${netAmount.toFixed(2)}`;
-      }
-      return "-";
-    }
-  },
+  // {
+  //   name: "Net Received",
+  //   selector: (row: any) => row.net_amount,
+  //   sortable: true,
+  //   cell: (row: any) => {
+  //     // Calculate net amount for withdrawal transactions
+  //     if (row.transaction_type === "Withdrawal" && parseFloat(row.ew_debit) > 0) {
+  //       const withdrawalAmount = parseFloat(row.ew_debit);
+  //       const netAmount = withdrawalAmount * 0.85; // 85% after 15% TDS
+  //       return `₹ ${netAmount.toFixed(2)}`;
+  //     }
+  //     return "-";
+  //   }
+  // },
   {
     name: "Status",
     selector: (row: any) => row.status,
@@ -316,22 +305,30 @@ export const getWalletColumns = () => [
   }
 ];
 
-export const getAdminDashboardTableColumns = () => [
+export const getAdminDashboardTableColumns : any = () => [
   {
     name: "Date",
-    selector: (row: any) => row.date,
+    selector: (row: any) => {
+      const date = new Date(row.Date_of_joining || row.date);
+      return isNaN(date.getTime()) ? row.Date_of_joining || "-" : date.toLocaleDateString();
+    },
     center: true,
+    sortable: true,
   },
   {
     name: "Member",
-    selector: (row: any) => row.member,
+    selector: (row: any) => row.Name || row.Member || "-",
     center: true,
+    sortable: true,
   },
   {
     name: "Package Amount",
-    selector: (row: any) => row.packageAmount,
+    selector: (row: any) => (row.package_value ? `₹${row.package_value}` : "-"),
+    center: true,
+    sortable: true,
   },
 ];
+
 
 export const getMembersColumns = (showEdit : boolean , handleEditClick: (memberId: string) => void) => [
   {
@@ -695,39 +692,39 @@ export const getHolidaysColumns = () => [
   },
 ];
 
-export const getRequestColumns = () =>[
+export const getRequestColumns = (approveTrasaction: (id : any) => void) =>[
   {
     name: "Date",
-    selector: (row: any) => getFormattedDate(row.date),
+    selector: (row: any) => getFormattedDate(row.transaction_date),
     sortable: true,
   },
   {
     name: "Member",
-    selector: (row: any) => row.Member,
+    selector: (row: any) => row.member_id,
     sortable: true,
   },
   {
     name: "Mobile No.",
-    selector: (row: any) =>row.mobileno,
+    selector: (row: any) =>row.memberDetails.mobileno,
     sortable: true,
   },
   {
     name: "Account No.",
-    selector: (row: any) => row.account,
+    selector: (row: any) => row.memberDetails.account_number,
     sortable: true,
   },
   {
     name: "IFSC Code",
-    selector: (row: any) => row.ifsc,
+    selector: (row: any) => row.memberDetails.ifsc_code,
     sortable: true,
   },
   {
-    name: "Amount",
-    selector: (row: any) => row.amount,
+    name: "Paid Amount",
+    selector: (row: any) => row.ew_debit,
     sortable: true,
   },
   {
-    name: "Deduction",
+    name: "Deducted",
     selector: (row: any) => row.deduction,
     sortable: true,
   },
@@ -738,7 +735,13 @@ export const getRequestColumns = () =>[
   },
   {
     name: "Action",
-    selector: (row: any) => row.action,
+    selector: (_row: any) => {
+      return (
+        <>
+        <Button variant="contained" onClick={()=>approveTrasaction(_row.transaction_id)}>Approve</Button>
+        </>
+      )
+    },
     sortable: true,
   },
 ]
@@ -746,42 +749,37 @@ export const getRequestColumns = () =>[
 export const getProccessedColumns = () =>[
   {
     name: "Date",
-    selector: (row: any) => getFormattedDate(row.date),
+    selector: (row: any) => getFormattedDate(row.transaction_date),
     sortable: true,
   },
   {
     name: "Member",
-    selector: (row: any) => row.Member,
+    selector: (row: any) => row.member_id,
     sortable: true,
   },
   {
     name: "Mobile No.",
-    selector: (row: any) =>row.mobileno,
+    selector: (row: any) =>row.memberDetails?.mobileno,
     sortable: true,
   },
   {
     name: "Account No.",
-    selector: (row: any) => row.account,
+    selector: (row: any) => row.memberDetails?.account_number,
     sortable: true,
   },
   {
     name: "IFSC Code",
-    selector: (row: any) => row.ifsc,
+    selector: (row: any) => row.memberDetails?.ifsc_code,
     sortable: true,
   },
   {
     name: "Paid Amount",
-    selector: (row: any) => row.amount,
+    selector: (row: any) => row.ew_debit,
     sortable: true,
   },
   {
     name: "Deducted",
-    selector: (row: any) => row.deducted,
-    sortable: true,
-  },
-  {
-    name: "Paidon",
-    selector: (row: any) => row.Paidon,
+    selector: (row: any) => row.deduction,
     sortable: true,
   },
   

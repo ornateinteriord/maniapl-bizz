@@ -14,6 +14,11 @@ import {
   CardContent,
   InputAdornment,
   FormHelperText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PersonIcon from '@mui/icons-material/Person';
@@ -21,7 +26,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import WcIcon from '@mui/icons-material/Wc';
 import LockIcon from '@mui/icons-material/Lock';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+// import LocationOnIcon from '@mui/icons-material/LocationOn';
 import UserContext from '../../../context/user/userContext';
 import { useSignupMutation } from '../../../api/Auth';
 import { LoadingComponent } from '../../../App';
@@ -32,6 +37,11 @@ const NewResgister: React.FC = () => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [genderError, setGenderError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [registrationData, setRegistrationData] = useState<{memberId: string; password: string}>({
+    memberId: '',
+    password: ''
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -68,19 +78,13 @@ const NewResgister: React.FC = () => {
       }, {
         onSuccess: (response) => {
           if (response.success) {
-            toast.success(
-              <div>
-                <div>Registration Successful!</div>
-                <div style={{ marginTop: '8px', fontSize: '14px' }}>
-                  <strong>Email:</strong> {response.user.email}<br/>
-                  <strong>Password:</strong> {formData.password}<br/>
-                </div>
-              </div>,
-              {
-                autoClose: 10000,
-                closeButton: true,
-              }
-            );
+            // toast.success("Registration successful");
+            setRegistrationData({
+              memberId: response.user.Member_id, 
+              password: formData.password
+            });
+            setSuccessDialogOpen(true);
+            toast.success("Registration successful");
           }
         },
         onError: (error) => {
@@ -96,305 +100,350 @@ const NewResgister: React.FC = () => {
     }
   };
 
+  const handleCloseDialog = () => {
+    setSuccessDialogOpen(false);
+    // Optionally clear form after successful registration
+    setFormData({});
+  };
+
   return (
-    <Card sx={{ margin: '2rem', mt: 10, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-      <CardContent>
-        {/* First Accordion - Joining Details */}
-        <Accordion 
-          defaultExpanded
-          sx={{
-            boxShadow: 'none',
-            '&.MuiAccordion-root': {
-              backgroundColor: '#fff'
-            }
-          }}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
+    <>
+      <Card sx={{ margin: '2rem', mt: 10, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+        <CardContent>
+          {/* First Accordion - Joining Details */}
+          <Accordion 
+            defaultExpanded
             sx={{
-              backgroundColor: '#7e22ce',
-              color: '#fff',
-              '& .MuiSvgIcon-root': { color: '#fff' }
+              boxShadow: 'none',
+              '&.MuiAccordion-root': {
+                backgroundColor: '#fff'
+              }
             }}
           >
-            Joining Details
-          </AccordionSummary>
-          <AccordionDetails sx={{ padding: '2rem' }}>
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <TextField
-                label="Sponsor Code"
-                name="sponsorCode"
-                value={user?.Member_id}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                disabled
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon sx={{ color: '#7e22ce' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#7e22ce',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#7e22ce',
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{
+                backgroundColor: '#7e22ce',
+                color: '#fff',
+                '& .MuiSvgIcon-root': { color: '#fff' }
+              }}
+            >
+              Joining Details
+            </AccordionSummary>
+            <AccordionDetails sx={{ padding: '2rem' }}>
+              <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <TextField
+                  label="Sponsor Code"
+                  name="sponsorCode"
+                  value={user?.Member_id}
+                  onChange={handleInputChange}
+                  fullWidth
+                  variant="outlined"
+                  disabled
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon sx={{ color: '#7e22ce' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#7e22ce',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7e22ce',
+                      }
                     }
-                  }
-                }}
-              />
-              <TextField
-                label="Sponsor Name"
-                name="sponsorName"
-                value={user?.Name}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                disabled
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon sx={{ color: '#7e22ce' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#7e22ce',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#7e22ce',
+                  }}
+                />
+                <TextField
+                  label="Sponsor Name"
+                  name="sponsorName"
+                  value={user?.Name}
+                  onChange={handleInputChange}
+                  fullWidth
+                  variant="outlined"
+                  disabled
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon sx={{ color: '#7e22ce' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#7e22ce',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7e22ce',
+                      }
                     }
-                  }
-                }}
-              />
-            </form>
-          </AccordionDetails>
-        </Accordion>
+                  }}
+                />
+              </form>
+            </AccordionDetails>
+          </Accordion>
 
-        {/* Second Accordion - New Member Details */}
-        <Accordion 
-          defaultExpanded
-          sx={{
-            mt: 2,
-            boxShadow: 'none',
-            '&.MuiAccordion-root': {
-              backgroundColor: '#fff'
-            }
-          }}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
+          {/* Second Accordion - New Member Details */}
+          <Accordion 
+            defaultExpanded
             sx={{
-              backgroundColor: '#7e22ce',
-              color: '#fff',
-              '& .MuiSvgIcon-root': { color: '#fff' }
+              mt: 2,
+              boxShadow: 'none',
+              '&.MuiAccordion-root': {
+                backgroundColor: '#fff'
+              }
             }}
           >
-            New Member Details
-          </AccordionSummary>
-          <AccordionDetails sx={{ padding: '2rem' }}>
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <TextField
-                label="Name"
-                name="Name"
-                value={formData.Name || ''}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                placeholder="Enter your name"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon sx={{ color: '#7e22ce' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#7e22ce',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#7e22ce',
-                    }
-                  }
-                }}
-              />
-              <FormControl error={!!genderError}>
-                <FormLabel sx={{ color: '#7e22ce', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <WcIcon sx={{ color: '#7e22ce' }} />
-                  Gender
-                </FormLabel>
-                <RadioGroup
-                  row
-                  name="gender"
-                  value={formData.gender || ''}
-                  onChange={handleRadioChange}
-                >
-                  <FormControlLabel 
-                    value="Male" 
-                    control={<Radio sx={{
-                      '&.Mui-checked': {
-                        color: '#7e22ce',
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{
+                backgroundColor: '#7e22ce',
+                color: '#fff',
+                '& .MuiSvgIcon-root': { color: '#fff' }
+              }}
+            >
+              New Member Details
+            </AccordionSummary>
+            <AccordionDetails sx={{ padding: '2rem' }}>
+              <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <TextField
+                  label="Name"
+                  name="Name"
+                  value={formData.Name || ''}
+                  onChange={handleInputChange}
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Enter your name"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon sx={{ color: '#7e22ce' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#7e22ce',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7e22ce',
                       }
-                    }}/>} 
-                    label="Male" 
-                  />
-                  <FormControlLabel 
-                    value="Female" 
-                    control={<Radio sx={{
-                      '&.Mui-checked': {
-                        color: '#7e22ce',
+                    }
+                  }}
+                />
+                <FormControl error={!!genderError}>
+                  <FormLabel sx={{ color: '#7e22ce', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <WcIcon sx={{ color: '#7e22ce' }} />
+                    Gender
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    name="gender"
+                    value={formData.gender || ''}
+                    onChange={handleRadioChange}
+                  >
+                    <FormControlLabel 
+                      value="Male" 
+                      control={<Radio sx={{
+                        '&.Mui-checked': {
+                          color: '#7e22ce',
+                        }
+                      }}/>} 
+                      label="Male" 
+                    />
+                    <FormControlLabel 
+                      value="Female" 
+                      control={<Radio sx={{
+                        '&.Mui-checked': {
+                          color: '#7e22ce',
+                        }
+                      }}/>} 
+                      label="Female" 
+                    />
+                  </RadioGroup>
+                </FormControl>
+                {genderError && (
+                  <FormHelperText sx={{color:"#d32f2f",marginTop:"-20px"}}>Please select your gender*</FormHelperText>
+                )}
+                <TextField
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email || ''}
+                  onChange={handleInputChange}
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Enter your email"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon sx={{ color: '#7e22ce' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#7e22ce',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7e22ce',
                       }
-                    }}/>} 
-                    label="Female" 
-                  />
-                </RadioGroup>
-              </FormControl>
-              {genderError && (
-                <FormHelperText sx={{color:"#d32f2f",marginTop:"-20px"}}>Please select your gender*</FormHelperText>
-              )}
-              <TextField
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email || ''}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                placeholder="Enter your email"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailIcon sx={{ color: '#7e22ce' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#7e22ce',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#7e22ce',
                     }
-                  }
-                }}
-              />
-              <TextField
-                label="Mobile"
-                name="mobileno"
-                type="tel"
-                value={formData.mobileno || ''}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                placeholder="Enter your mobile number"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PhoneIcon sx={{ color: '#7e22ce' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#7e22ce',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#7e22ce',
+                  }}
+                />
+                <TextField
+                  label="Mobile"
+                  name="mobileno"
+                  type="tel"
+                  value={formData.mobileno || ''}
+                  onChange={handleInputChange}
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Enter your mobile number"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PhoneIcon sx={{ color: '#7e22ce' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#7e22ce',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7e22ce',
+                      }
                     }
-                  }
-                }}
-              />
-              <TextField
-                label="Pin Code"
-                name="pincode"
-                value={formData.pincode || ''}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                placeholder="Enter your pin code"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LocationOnIcon sx={{ color: '#7e22ce' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#7e22ce',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#7e22ce',
+                  }}
+                />
+                <TextField
+                  label="Password"
+                  name="password"
+                  type="password"
+                  value={formData.password || ''}
+                  onChange={handleInputChange}
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Enter your password"
+                  error={!!errorMessage} 
+                  helperText={errorMessage} 
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon sx={{ color: '#7e22ce' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#7e22ce',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7e22ce',
+                      }
                     }
-                  }
-                }}
-              />
-              <TextField
-                label="Password"
-                name="password"
-                type="password"
-                value={formData.password || ''}
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                placeholder="Enter your password"
-                error={!!errorMessage} 
-                helperText={errorMessage} 
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockIcon sx={{ color: '#7e22ce' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#7e22ce',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#7e22ce',
-                    }
-                  }
-                }}
-              />
-            </form>
-          </AccordionDetails>
-        </Accordion>
+                  }}
+                />
+              </form>
+            </AccordionDetails>
+          </Accordion>
 
-        {/* Register Button */}
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={isPending}
-          sx={{
-            backgroundColor: '#7e22ce',
-            margin: '1rem',
-            float: 'right',
-            '&:hover': {
-              backgroundColor: '#581c87'
-            },
-            '&:disabled': {
-              backgroundColor: '#cccccc'
-            }
+          {/* Register Button */}
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={isPending}
+            sx={{
+              textTransform: "capitalize",
+              backgroundColor: '#7e22ce',
+              margin: '1rem',
+              float: 'right',
+              '&:hover': {
+                backgroundColor: '#581c87'
+              },
+              '&:disabled': {
+                backgroundColor: '#cccccc'
+              }
+            }}
+          >
+            {isPending ? 'Registering...' : 'Register'}
+          </Button>
+        </CardContent>
+        {isPending && <LoadingComponent/>}
+      </Card>
+
+      {/* Success Dialog */}
+      <Dialog
+        open={successDialogOpen}
+        onClose={handleCloseDialog}
+        aria-labelledby="registration-success-dialog"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle 
+          id="registration-success-dialog"
+          sx={{ 
+            backgroundColor: '#7e22ce', 
+            color: 'white',
+            textAlign: 'center'
           }}
         >
-          {isPending ? 'Registering...' : 'Register'}
-        </Button>
-      </CardContent>
-      {isPending && <LoadingComponent/>}
-    </Card>
+          Registration Successful!
+        </DialogTitle>
+        <DialogContent sx={{ padding: '2rem' }}>
+          <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
+            New Member Created Successfully
+          </Typography>
+          <div style={{ 
+            backgroundColor: '#f8fafc', 
+            padding: '1.5rem', 
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0'
+          }}>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              <strong>Member ID:</strong> {registrationData.memberId}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Password:</strong> {registrationData.password}
+            </Typography>
+          </div>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              mt: 2, 
+              color: '#64748b'
+            }}
+          >
+            Please save these credentials securely. The member ID will be used for login.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ padding: '1rem 2rem 2rem' }}>
+          <Button 
+            onClick={handleCloseDialog}
+            variant="contained"
+            sx={{
+              textTransform: "capitalize",
+              backgroundColor: '#7e22ce',
+              '&:hover': {
+                backgroundColor: '#581c87'
+              }
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
 
