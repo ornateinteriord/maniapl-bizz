@@ -33,7 +33,7 @@ const Wallet = () => {
   const [deduction, setDeduction] = useState(0);
   const [netAmount, setNetAmount] = useState(0);
   const [alert, setAlert] = useState({ open: false, message: "", severity: "success" });
-  const [optimisticBalance, setOptimisticBalance] = useState<number | null>(null);;
+  const [optimisticBalance, setOptimisticBalance] = useState<number | null>(null);
 
   const memberId = TokenService.getMemberId();
 
@@ -42,14 +42,17 @@ const Wallet = () => {
     isLoading,
     refetch,
   } = useGetWalletOverview(memberId);
+  
+  console.log("Wallet Data:", walletData); // Debug log
 
   const withdrawMutation = useWalletWithdraw();
 
   useEffect(() => {
-    if (walletData?.balance) {
-      setOptimisticBalance(parseFloat(walletData.balance));
+    if (walletData?.data?.balance) {
+      const balance = parseFloat(walletData.data.balance);
+      setOptimisticBalance(balance);
     }
-  }, [walletData?.balance]);
+  }, [walletData?.data?.balance]);
 
   const handleAmountChange = (e: any) => {
     const selectedAmount = e.target.value;
@@ -154,7 +157,12 @@ const Wallet = () => {
   };
 
   // Use optimistic balance if available, otherwise use server balance
-  const displayBalance = optimisticBalance !== null ? optimisticBalance : parseFloat(walletData?.balance || 0);
+  // Ensure balance is never negative (backend should handle this, but frontend safety)
+  const displayBalance = Math.max(0, optimisticBalance !== null ? optimisticBalance : parseFloat(walletData?.balance || 0));
+
+  // Debug: Check what's actually in the data
+  console.log("Total Withdrawal from API:", walletData?.totalWithdrawal);
+  console.log("Total Withdrawal type:", typeof walletData?.totalWithdrawal);
 
   if (isLoading) {
     return (
@@ -190,6 +198,7 @@ const Wallet = () => {
           onClose={handleCloseAlert}
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
+
         </Snackbar>
         
         <Accordion
@@ -201,17 +210,6 @@ const Wallet = () => {
             },
           }}
         >
-          {/* <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            sx={{
-              backgroundColor: "#7e22ce",
-              color: "#fff",
-              "& .MuiSvgIcon-root": { color: "#fff" },
-              minHeight: isMobile ? "48px" : "64px",
-            }}
-          >
-            Wallet Overview
-          </AccordionSummary> */}
           <AccordionDetails>
             <Grid container spacing={3} sx={{ mb: 3 }}>
               <Grid item xs={12} md={4}>
@@ -279,9 +277,7 @@ const Wallet = () => {
                     variant="h4"
                     sx={{ color: "#7e22ce", mt: 1, fontWeight: "bold" }}
                   >
-                    {walletData
-                      ? `₹${walletData.totalIncome || "0.00"}`
-                      : "₹0.00"}
+                    {walletData?.totalIncome ? `₹${walletData?.totalIncome}` : "₹0.00"}
                   </Typography>
                 </Box>
               </Grid>
@@ -302,7 +298,8 @@ const Wallet = () => {
                     variant="h4"
                     sx={{ color: "#7e22ce", mt: 1, fontWeight: "bold" }}
                   >
-                    {walletData ? `₹${walletData.totalWithdrawal}` : "₹0.00"}
+                    {/* Fixed: Direct access to totalWithdrawal */}
+                    {walletData?.totalWithdrawal ? `₹${walletData?.totalWithdrawal}` : "₹0.00"}
                   </Typography>
                 </Box>
               </Grid>
@@ -481,10 +478,10 @@ const Wallet = () => {
             Transaction History
           </AccordionSummary>
           <AccordionDetails>
-            {walletData?.transactions && walletData.transactions.length > 0 ? (
+            {walletData?.data?.transactions && walletData.data.transactions.length > 0 ? (
               <DataTable
                 columns={getWalletColumns()}
-                data={walletData.transactions}
+                data={walletData.data.transactions}
                 pagination
                 customStyles={DASHBOARD_CUTSOM_STYLE}
                 paginationPerPage={isMobile ? 10 : 25}
