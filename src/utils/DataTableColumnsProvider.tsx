@@ -845,7 +845,7 @@ export const getProccessedColumns = () =>[
   },
   {
     name: "Paid Amount",
-    selector: (row: any) => row.ew_debit,
+    selector: (row: any) => row.net_amount,
     sortable: true,
   },
   {
