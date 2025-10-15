@@ -1,7 +1,7 @@
 import DataTable from 'react-data-table-component';
-import { Card, CardContent, Accordion, AccordionSummary, AccordionDetails, TextField, Typography, Button, Grid, CircularProgress } from '@mui/material';
+import { Card, CardContent, Accordion, AccordionSummary, AccordionDetails, TextField, Typography, Button, Grid, CircularProgress,  } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { DASHBOARD_CUTSOM_STYLE, getMembersColumns } from '../../../utils/DataTableColumnsProvider';
+import { DASHBOARD_CUTSOM_STYLE, getMembersColumns, getPendingMembersColumns } from '../../../utils/DataTableColumnsProvider';
 import './Members.scss'
 import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
 import {  useEffect, useState } from 'react';
@@ -9,24 +9,28 @@ import { toast } from 'react-toastify';
 import { useGetAllMembersDetails } from '../../../api/Admin';
 import { useNavigate } from 'react-router-dom';
 import useSearch from '../../../hooks/SearchQuery';
+import { useActivatePackage } from '../../../api/Memeber';
+
 
 
 
 interface MemberTableProps {
+  
   title: string;
   summaryTitle: string;
   data: any[];
   showEdit?: boolean;
+  showActivate?: boolean;
   isLoading?:boolean;
-
  
 }
-const MemberTable = ({ title, summaryTitle, data, showEdit = false, isLoading = false }: MemberTableProps) => {
+const MemberTable = ({ title, summaryTitle, data, showEdit = false, showActivate = false, isLoading = false }: MemberTableProps) => {
   const [isEdit , setIsEdit] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate, setToDate] = useState<string | null>(null);
   const { searchQuery, setSearchQuery, filteredData } = useSearch(data)
+  const { mutate: activatePackage, isPending: isActivating } = useActivatePackage();
 
   const navigate = useNavigate()
 
@@ -34,13 +38,23 @@ const MemberTable = ({ title, summaryTitle, data, showEdit = false, isLoading = 
     setIsEdit(true);
     setSelectedMemberId(memberId); 
   };
+
+  const handleActivateClick = (memberId: string) => {
+    activatePackage(memberId, {
+      onSuccess: (response) => {
+        if (response.success) {
+          toast.success(`Package activated for member ${memberId}`);
+        }
+      },
+    });
+  };
  
   useEffect(()=>{
     if(isEdit){
       navigate(`/admin/members/${selectedMemberId}`)
     }
   },[isEdit])
-  
+
   
   return (
     
@@ -89,7 +103,7 @@ const MemberTable = ({ title, summaryTitle, data, showEdit = false, isLoading = 
                   />
               </div>
               <DataTable
-                columns={getMembersColumns(showEdit , handleEditClick)}
+               columns={showActivate ? getPendingMembersColumns(handleActivateClick, isActivating) : getMembersColumns(showEdit, handleEditClick)}
                 data={filteredData}
                 pagination
                 customStyles={DASHBOARD_CUTSOM_STYLE}
@@ -119,9 +133,10 @@ interface Member {
   spackage: number | string;
   mobileno: number | string;
   status: string;
+  Name: string;
 }
 
-type status = "All" | "active" | "Inactive" | "pending";
+type status = "All" | "active" | "Inactive" | "Pending";
 
 const useMembers = (status: status) => {
   const {data:members,isLoading,isError,error} = useGetAllMembersDetails()
@@ -185,19 +200,16 @@ export const InActiveMembers = () => {
 }
 
 export const PendingMembers = () => {
-  const {memberdata,isLoading} = useMembers("pending")
+  const {memberdata,isLoading} = useMembers("Pending")
   return (
     <MemberTable
       title="Pending Members"
       summaryTitle="List of Pending Members"
       data={memberdata}
+      showActivate={true}
       isLoading={isLoading}
     />
   );
 };
 
-
-
-
 export default Members;
-

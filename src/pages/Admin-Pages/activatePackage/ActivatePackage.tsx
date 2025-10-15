@@ -274,53 +274,71 @@ const ActivatePackage = () => {
                 )}
 
                 {/* Action Buttons */}
-                <Box display="flex" gap={2}>
-                  {selectedMember.status === 'Pending' ? (
-                    <>
-                      <Button
-                        variant="contained"
-                        onClick={() => setShowConfirmDialog(true)}
-                        disabled={!selectedPackage}
-                        fullWidth
-                        sx={{
-                          backgroundColor: primaryColor,
-                          '&:hover': {
-                            backgroundColor: '#581c87',
-                          },
-                          py: 1.5
-                        }}
-                      >
-                        Activate Package
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        onClick={handleReset}
-                        sx={{
-                          borderColor: 'grey.400',
-                          color: 'text.primary',
-                          minWidth: '120px',
-                          py: 1.5
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      disabled
-                      fullWidth
-                      sx={{
-                        backgroundColor: 'grey.300',
-                        color: 'grey.500',
-                        py: 1.5
-                      }}
-                    >
-                      <CheckCircle sx={{ mr: 1 }} />
-                      Already Active
-                    </Button>
-                  )}
-                </Box>
+               <Box display="flex" flexDirection="column" gap={2}>
+  {selectedMember.status === 'Pending' ? (
+    <>
+    <Box display="flex" gap={2} justifyContent="space-between">
+      <Button
+        variant="contained"
+        onClick={() => setShowConfirmDialog(true)}
+        disabled={!selectedPackage}
+        fullWidth
+        sx={{
+          backgroundColor: primaryColor,
+          '&:hover': {
+            backgroundColor: '#581c87',
+          },
+          py: 1.5,
+        }}
+      >
+        Activate Package
+      </Button>
+
+      <Button
+        variant="outlined"
+        onClick={handleReset}
+        sx={{
+          borderColor: 'grey.400',
+          color: 'text.primary',
+          minWidth: '120px',
+          py: 1.5,
+        }}
+      >
+        Cancel
+      </Button>
+</Box>
+    </>
+  ) : selectedMember.status === 'Inactive' ? (
+    <Box
+      sx={{
+        backgroundColor: '#fff3cd',
+        border: '1px solid #ffeeba',
+        color: '#856404',
+        p: 2,
+        borderRadius: 1,
+        textAlign: 'center',
+        fontWeight: 500,
+      }}
+    >
+      ⚠️ This member cannot be activated.
+    </Box>
+  ) : (
+    <Button
+      variant="contained"
+      disabled
+      fullWidth
+      sx={{
+        backgroundColor: 'grey.300',
+        color: 'grey.500',
+        py: 1.5,
+      }}
+    >
+      <CheckCircle sx={{ mr: 1 }} />
+      Already Active
+    </Button>
+  )}
+</Box>
+
               </Paper>
             )}
           </CardContent>

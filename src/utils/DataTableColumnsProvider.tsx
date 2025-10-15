@@ -1,6 +1,6 @@
 import { Button, IconButton } from "@mui/material";
 import  VisibilityIcon  from '@mui/icons-material/Visibility';
-import { Edit } from "lucide-react";
+import { CheckCircle, Edit } from "lucide-react";
 import { getFormattedDate } from './common';
 import { MemberDetails } from "../store/store";
 
@@ -398,6 +398,88 @@ export const getMembersColumns = (showEdit : boolean , handleEditClick: (memberI
     
   }
 ];
+
+export const getPendingMembersColumns = (
+  handleActivateClick: (memberId: string) => void, 
+  isActivating: boolean
+) => [
+  {
+    name: "SNo",
+    selector: (row: any) => row.sNo,
+    sortable: true,
+  },
+  {
+    name: "Member",
+    selector: (row: any) => row.Member_id,
+    sortable: true,
+  },
+  {
+    name: "Approved On",
+    selector: (row: any) => getFormattedDate(row.Date_of_joining),
+    sortable: true,
+  },
+  {
+    name: "Password",
+    selector: (row: any) => row.password,
+    sortable: true,
+  },
+  {
+    name: "Sponsor",
+    selector: (row: any) => row.Sponsor_name ?? "-",
+    sortable: true,
+  },
+  {
+    name: "MobileNo",
+    selector: (row: any) => row.mobileno,
+    sortable: true,
+  },
+  {
+    name: "Status",
+    selector: (row: any) => row.status,
+    sortable: true,
+    cell: (row: any) => (
+      <div
+        style={{
+          color:
+            row.status.toLowerCase() === "active"
+              ? "green"
+              : row.status.toLowerCase() === "pending"
+              ? "#ffd700"
+              : "red",
+          padding: "5px 10px",
+          borderRadius: "4px",
+          fontSize: "14px",
+        }}
+      >
+        {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+      </div>
+    ),
+  },
+  {
+    name: "Action",
+    omit: false,
+    cell: (row: any) =>
+      row.status.toLowerCase() === "inactive" ? (
+        <div style={{ color: "red", fontWeight: 500 }}>
+          Cannot Activate
+        </div>
+      ) : (
+        <IconButton
+          onClick={() => handleActivateClick(row.Member_id)}
+          disabled={isActivating}
+          sx={{
+            color: "#51cf66",
+            padding: "5px",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          <CheckCircle />
+        </IconButton>
+      ),
+  },
+];
+
 
 export const getSupportTicketColumns = (handleOpenDialog : any) =>  [
   {
