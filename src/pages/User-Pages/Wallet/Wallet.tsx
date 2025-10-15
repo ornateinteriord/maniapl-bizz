@@ -243,13 +243,13 @@ const Wallet = () => {
                   >
                     ₹{displayBalance.toFixed(2)}
                   </Typography>
-                  <Typography
+                  {/* <Typography
                     variant="caption"
                     color="textSecondary"
                     sx={{ mt: 1, display: "block" }}
                   >
                     {walletData?.calculation?.formula || "Total Income - Total Expenses"}
-                  </Typography>
+                  </Typography> */}
                   {withdrawMutation.isPending && (
                     <Typography
                       variant="caption"
