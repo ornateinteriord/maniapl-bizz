@@ -209,22 +209,25 @@ export const getTransactionColumns = () => [
     sortable: true,
   },
   {
-    name: "Credits",
-    selector: (row: any) => `₹ ${row.ew_debit}`,
+    name: "Credit",
+    selector: (row: any) => row.ew_credit ? `₹ ${parseFloat(row.ew_credit).toLocaleString()}` : "-",
     sortable: true,
   },
   {
     name: "Debit",
-    selector: (row: any) => `₹ ${row.net_amount}`,
+    selector: (row: any) => row.ew_debit ? `₹ ${parseFloat(row.ew_debit).toLocaleString()}` : "-",
     sortable: true,
   },
- 
+  {
+    name: "Net Amount",
+    selector: (row: any) => row.net_amount ? `₹ ${parseFloat(row.net_amount).toLocaleString()}` : "-",
+    sortable: true,
+  },
   {
     name: "TDS (15%)",
     selector: (row: any) => row.deduction,
     sortable: true,
     cell: (row: any) => {
-      // Calculate TDS for withdrawal transactions
       if (row.transaction_type === "Withdrawal" && parseFloat(row.ew_debit) > 0) {
         const withdrawalAmount = parseFloat(row.ew_debit);
         const tds = withdrawalAmount * 0.15;
@@ -233,20 +236,6 @@ export const getTransactionColumns = () => [
       return "-";
     }
   },
-  // {
-  //   name: "Net Received",
-  //   selector: (row: any) => row.net_amount,
-  //   sortable: true,
-  //   cell: (row: any) => {
-  //     // Calculate net amount for withdrawal transactions
-  //     if (row.transaction_type === "Withdrawal" && parseFloat(row.ew_debit) > 0) {
-  //       const withdrawalAmount = parseFloat(row.ew_debit);
-  //       const netAmount = withdrawalAmount * 0.85; // 85% after 15% TDS
-  //       return `₹ ${netAmount.toFixed(2)}`;
-  //     }
-  //     return "-";
-  //   }
-  // },
   {
     name: "Status",
     selector: (row: any) => row.status,
