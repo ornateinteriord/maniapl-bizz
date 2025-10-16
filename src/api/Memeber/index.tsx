@@ -299,3 +299,81 @@ export const useImageKitUpload = (username: string) => {
     },
   });
 };
+
+
+export const useGetPendingWithdrawals = () => {
+  return useQuery({
+    queryKey: ["pendingWithdrawals"],
+    queryFn: async () => {
+      const response = await get("/user/trasactions/Pending");
+      if (response.success) {
+        return response.data;
+      } else {
+        throw new Error(response.message || "Failed to fetch pending withdrawals");
+      }
+    }
+  });
+};
+
+export const useGetApprovedWithdrawals = () => {
+  return useQuery({
+    queryKey: ["pendingWithdrawals"],
+    queryFn: async () => {
+      const response = await get("/user/trasactions/Completed");
+      if (response.success) {
+        return response.data;
+      } else {
+        throw new Error(response.message || "Failed to fetch pending withdrawals");
+      }
+    }
+  });
+};
+
+// Approve withdrawal
+export const useApproveWithdrawal = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (transactionId) => {
+      return await put(`/user/approve-withdrawal/${transactionId}`);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        toast.success(response.message);
+        queryClient.invalidateQueries({ queryKey: ["pendingWithdrawals"] });
+      } else {
+        toast.error(response.message);
+      }
+    },
+    // onError: (error) => {
+    //   toast.error(error.response?.data?.message || "Failed to approve withdrawal");
+    // }
+  });
+};
+
+export const useGetlevelbenifits = (memberId: any)=>{
+  return useQuery({
+    queryKey:["level-benifits",memberId],
+    queryFn:async()=>{
+const response = await get (`/user/level-benefits/${memberId}`);
+ if (response.success){
+  return response.data;
+ }else{
+  throw new Error(response.message || "Failed to fetch level-benifits data" )
+ }
+    }
+  })
+}
+
+export const useGetdailypayout = (memberId: any)=>{
+  return useQuery({
+    queryKey:["level-benifits",memberId],
+    queryFn: async()=>{
+      const response = await get (`/user/daily/${memberId}`);
+      if (response.success){
+        return response.data;
+      }else{
+        throw new Error (response.message || "Failed to fetch daily payout data")
+      }
+    }
+  })
+}
