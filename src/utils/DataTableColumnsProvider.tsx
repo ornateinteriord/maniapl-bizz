@@ -1,6 +1,6 @@
 import { Button, IconButton } from "@mui/material";
 import  VisibilityIcon  from '@mui/icons-material/Visibility';
-import { CheckCircle, Edit } from "lucide-react";
+import {  Edit } from "lucide-react";
 import { getFormattedDate } from './common';
 import { MemberDetails } from "../store/store";
 
@@ -386,8 +386,6 @@ export const getMembersColumns = (showEdit : boolean , handleEditClick: (memberI
 ];
 
 export const getPendingMembersColumns = (
-  handleActivateClick: (memberId: string) => void, 
-  isActivating: boolean
 ) => [
   {
     name: "SNo",
@@ -441,29 +439,29 @@ export const getPendingMembersColumns = (
       </div>
     ),
   },
-  {
-    name: "Action",
-    omit: false,
-    cell: (row: any) =>
-      row.status.toLowerCase() === "inactive" ? (
-        <div style={{ color: "red", fontWeight: 500 }}>
-          Cannot Activate
-        </div>
-      ) : (
-        <IconButton
-          onClick={() => handleActivateClick(row.Member_id)}
-          disabled={isActivating}
-          sx={{
-            color: "#51cf66",
-            padding: "5px",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          <CheckCircle />
-        </IconButton>
-      ),
-  },
+  // {
+  //   name: "Action",
+  //   omit: false,
+  //   cell: (row: any) =>
+  //     row.status.toLowerCase() === "inactive" ? (
+  //       <div style={{ color: "red", fontWeight: 500 }}>
+  //         Cannot Activate
+  //       </div>
+  //     ) : (
+  //       <IconButton
+  //         onClick={() => handleActivateClick(row.Member_id)}
+  //         disabled={isActivating}
+  //         sx={{
+  //           color: "#51cf66",
+  //           padding: "5px",
+  //           borderRadius: "4px",
+  //           cursor: "pointer",
+  //         }}
+  //       >
+  //         <CheckCircle />
+  //       </IconButton>
+  //     ),
+  // },
 ];
 
 

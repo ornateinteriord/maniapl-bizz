@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 import { useGetAllMembersDetails } from '../../../api/Admin';
 import { useNavigate } from 'react-router-dom';
 import useSearch from '../../../hooks/SearchQuery';
-import { useActivatePackage } from '../../../api/Memeber';
+// import { useActivatePackage } from '../../../api/Memeber';
 
 
 
@@ -30,7 +30,7 @@ const MemberTable = ({ title, summaryTitle, data, showEdit = false, showActivate
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate, setToDate] = useState<string | null>(null);
   const { searchQuery, setSearchQuery, filteredData } = useSearch(data)
-  const { mutate: activatePackage, isPending: isActivating } = useActivatePackage();
+  // const { mutate: activatePackage,  } = useActivatePackage();
 
   const navigate = useNavigate()
 
@@ -39,15 +39,6 @@ const MemberTable = ({ title, summaryTitle, data, showEdit = false, showActivate
     setSelectedMemberId(memberId); 
   };
 
-  const handleActivateClick = (memberId: string) => {
-    activatePackage(memberId, {
-      onSuccess: (response) => {
-        if (response.success) {
-          toast.success(`Package activated for member ${memberId}`);
-        }
-      },
-    });
-  };
  
   useEffect(()=>{
     if(isEdit){
@@ -103,7 +94,7 @@ const MemberTable = ({ title, summaryTitle, data, showEdit = false, showActivate
                   />
               </div>
               <DataTable
-               columns={showActivate ? getPendingMembersColumns(handleActivateClick, isActivating) : getMembersColumns(showEdit, handleEditClick)}
+               columns={showActivate ? getPendingMembersColumns() : getMembersColumns(showEdit, handleEditClick)}
                 data={filteredData}
                 pagination
                 customStyles={DASHBOARD_CUTSOM_STYLE}
