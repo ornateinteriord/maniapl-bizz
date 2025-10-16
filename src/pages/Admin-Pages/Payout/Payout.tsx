@@ -15,7 +15,8 @@ import "./Payout.scss";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DataTable from "react-data-table-component";
 import { DASHBOARD_CUTSOM_STYLE, getProccessedColumns, getRequestColumns,   } from "../../../utils/DataTableColumnsProvider";
-import { useApproveWithdrawal, useGetApprovedWithdrawals, useGetPendingWithdrawals } from "../../../api/Admin";
+import { useApproveWithdrawal, useGetApprovedWithdrawals, useGetPendingWithdrawals } from "../../../api/Memeber";
+
 
 
 interface PayoutTableProps{
