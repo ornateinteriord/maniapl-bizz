@@ -227,3 +227,25 @@ export const useGeneratePackage =()=>{
   })
 }
 
+
+export const useUpdateMemberStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ memberId, status }: { memberId: any; status: any }) => {
+      const response = await put(`/admin/update-status/${memberId}`, { status });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Member activated successfully!');
+      
+      // Invalidate and refetch queries
+      queryClient.invalidateQueries({ queryKey: ['allMembers'] });
+
+    },
+    onError: (error) => {
+      console.error('Error updating member status:', error);
+      toast.error('Failed to activate member. Please try again.');
+    }
+  });
+};

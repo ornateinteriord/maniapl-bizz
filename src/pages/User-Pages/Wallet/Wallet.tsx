@@ -478,10 +478,10 @@ const Wallet = () => {
             Transaction History
           </AccordionSummary>
           <AccordionDetails>
-            {walletData?.data?.transactions && walletData.data.transactions.length > 0 ? (
+            {walletData?.transactions && walletData.transactions.length > 0 ? (
               <DataTable
                 columns={getWalletColumns()}
-                data={walletData.data.transactions}
+                data={walletData?.transactions}
                 pagination
                 customStyles={DASHBOARD_CUTSOM_STYLE}
                 paginationPerPage={isMobile ? 10 : 25}
