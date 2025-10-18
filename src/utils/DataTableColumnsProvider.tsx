@@ -3,6 +3,7 @@ import  VisibilityIcon  from '@mui/icons-material/Visibility';
 import {  Edit } from "lucide-react";
 import { getFormattedDate } from './common';
 import { MemberDetails } from "../store/store";
+import { CheckCircle } from "@mui/icons-material";
 
 
 export const getUserDashboardTableColumns = () => [
@@ -154,7 +155,7 @@ export const getDirectColumns = () => [
 export const getLevelBenifitsColumns = () => [
   {
     name: "Date",
-    selector: (row: any) => row.date,
+    selector: (row: any) =>  getFormattedDate(row.date),
     sortable: true,
   },
   {
@@ -259,26 +260,26 @@ export const getTransactionColumns = () => [
 export const getWalletColumns = () => [
   {
     name: "Date",
-    selector: (row: any) => row.transaction_date, // Matches backend field
+    selector: (row: any) => row.transaction_date, 
     sortable: true,
-    cell: (row : any) => new Date(row.transaction_date).toLocaleDateString() // Format date
+    cell: (row : any) => new Date(row.transaction_date).toLocaleDateString()
   },
   {
     name: "Transaction ID",
-    selector: (row: any) => row.transaction_id, // Matches backend field
+    selector: (row: any) => row.transaction_id, 
     sortable: true,
   },
   {
     name: "Type",
-    selector: (row: any) => row.transaction_type, // Matches backend field
+    selector: (row: any) => row.transaction_type, 
     sortable: true,
   },
   {
     name: "Amount",
-    selector: (row: any) => row.ew_debit, // Or use ew_credit, depending on your logic
+    selector: (row: any) => row.ew_debit, 
     sortable: true,
     cell: (row: any) => {
-      // Example: Display debit as negative, credit as positive
+     
       if (parseFloat(row.ew_debit) > 0) {
         return `-₹${parseFloat(row.ew_debit).toFixed(2)}`;
       } else {
@@ -288,9 +289,9 @@ export const getWalletColumns = () => [
   },
   {
     name: "Status",
-    selector: (row: any) => row.status, // Matches backend field
+    selector: (row: any) => row.status,
     sortable: true,
-    cell: (row: any) => row.status.charAt(0).toUpperCase() + row.status.slice(1) // Capitalize status
+    cell: (row: any) => row.status.charAt(0).toUpperCase() + row.status.slice(1) 
   }
 ];
 
@@ -386,6 +387,8 @@ export const getMembersColumns = (showEdit : boolean , handleEditClick: (memberI
 ];
 
 export const getPendingMembersColumns = (
+    handleActivateClick: (memberId: string) => void,
+  isActivating: boolean
 ) => [
   {
     name: "SNo",
@@ -439,29 +442,32 @@ export const getPendingMembersColumns = (
       </div>
     ),
   },
-  // {
-  //   name: "Action",
-  //   omit: false,
-  //   cell: (row: any) =>
-  //     row.status.toLowerCase() === "inactive" ? (
-  //       <div style={{ color: "red", fontWeight: 500 }}>
-  //         Cannot Activate
-  //       </div>
-  //     ) : (
-  //       <IconButton
-  //         onClick={() => handleActivateClick(row.Member_id)}
-  //         disabled={isActivating}
-  //         sx={{
-  //           color: "#51cf66",
-  //           padding: "5px",
-  //           borderRadius: "4px",
-  //           cursor: "pointer",
-  //         }}
-  //       >
-  //         <CheckCircle />
-  //       </IconButton>
-  //     ),
-  // },
+  {
+    name: "Action",
+    omit: false,
+    cell: (row: any) =>
+      row.status.toLowerCase() === "inactive" ? (
+        <div style={{ color: "red", fontWeight: 500 }}>
+          Cannot Activate
+        </div>
+      ) : (
+        <Button
+          onClick={() => handleActivateClick(row.Member_id)}
+          disabled={isActivating}
+          variant="contained"
+          sx={{
+            backgroundColor: "#51cf66",
+            "&:hover": { backgroundColor: "#3bcf57" },
+            color: "#000",
+            padding: "2px",
+            cursor: "pointer",
+            textTransform:"capitalize"
+          }}
+        >
+          Active
+        </Button>
+      ),
+  },
 ];
 
 

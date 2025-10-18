@@ -72,7 +72,8 @@ const NewResgister: React.FC = () => {
     }
     try {
       mutate({ 
-        Sponsor_code: user.Member_id, 
+        sponsor_id: user.Member_id, 
+        Sponsor_code: user.Member_id,
         Sponsor_name: user.Name,
         ...formData 
       }, {
