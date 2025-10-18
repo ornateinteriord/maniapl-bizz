@@ -3,7 +3,6 @@ import  VisibilityIcon  from '@mui/icons-material/Visibility';
 import {  Edit } from "lucide-react";
 import { getFormattedDate } from './common';
 import { MemberDetails } from "../store/store";
-import { CheckCircle } from "@mui/icons-material";
 
 
 export const getUserDashboardTableColumns = () => [
