@@ -45,7 +45,7 @@ const Wallet = () => {
   
   console.log("Wallet Data:", walletData); // Debug log
 
-  const withdrawMutation = useWalletWithdraw();
+  const withdrawMutation = useWalletWithdraw(memberId);
 
   useEffect(() => {
     if (walletData?.data?.balance) {

@@ -212,12 +212,12 @@ export const useGetWalletOverview = (memberId: any) => {
     enabled: !!memberId,
   });
 };
-export const useWalletWithdraw = () => {
+export const useWalletWithdraw = (memberId:any) => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (data: { memberId: string; amount: string }) => {
-      return await post("/user/withdraw", data);
+      return await post(`user/withdraw/${memberId}`, data);
     },
     onSuccess: (response) => {
       if (response.success) {
@@ -364,16 +364,17 @@ const response = await get (`/user/level-benefits/${memberId}`);
   })
 }
 
-export const useGetdailypayout = (memberId: any)=>{
+export const useGetDailyPayout = (memberId: any) => {
   return useQuery({
-    queryKey:["level-benifits",memberId],
-    queryFn: async()=>{
-      const response = await get (`/user/daily/${memberId}`);
-      if (response.success){
-        return response.data;
-      }else{
-        throw new Error (response.message || "Failed to fetch daily payout data")
+    queryKey: ["daily-payout", memberId],
+    queryFn: async () => {
+      const response = await get(`/user/daily/${memberId}`);
+      if (response?.success) {
+        return response?.data?.daily_earnings || [];
+      } else {
+        throw new Error(response.data?.message || "Failed to fetch daily payout data");
       }
-    }
-  })
-}
+    },
+    enabled: !!memberId,
+  });
+};
