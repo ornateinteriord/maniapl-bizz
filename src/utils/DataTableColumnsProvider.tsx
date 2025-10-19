@@ -181,19 +181,22 @@ export const getDailyPayoutColumns = () => [
     sortable: true,
   },
   {
-    name: "Level Earnings",
-    selector: (row: any) => row.levelEarnings,
+    name: "Level Benefits",
+    selector: (row: any) => row.level_benefits,
     sortable: true,
+    cell: (row: any) => `${row.level_benefits}`
   },
   {
     name: "Direct Benefits",
-    selector: (row: any) => row.directBenefits,
+    selector: (row: any) => row.direct_benefits,
     sortable: true,
+    cell: (row: any) => `${row.direct_benefits}`
   },
   {
-    name: "Gross Earnings",
-    selector: (row: any) => row.grossEarnings,
+    name: "Gross Profit",
+    selector: (row: any) => row.gross_profit,
     sortable: true,
+    cell: (row: any) => `${row.gross_profit}`
   },
 ];
 

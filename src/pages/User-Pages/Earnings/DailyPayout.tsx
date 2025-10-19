@@ -2,13 +2,15 @@ import DataTable from 'react-data-table-component';
 import { Card, CardContent, Accordion, AccordionSummary, AccordionDetails, TextField } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { DASHBOARD_CUTSOM_STYLE, getDailyPayoutColumns } from '../../../utils/DataTableColumnsProvider';
-import { useGetdailypayout } from '../../../api/Memeber';
 import TokenService from '../../../api/token/tokenService';
+import { useGetDailyPayout } from '../../../api/Memeber';
 
 const DailyPayout = () => {
   
 const memberId = TokenService.getMemberId();
-  const { data = [] } = useGetdailypayout(memberId);
+const { data = [] } = useGetDailyPayout(memberId);
+
+    console.log('Daily Payout Data:', data);
 
   const noDataComponent = <div style={{ padding: '24px' }}>No data available in table</div>;
 
