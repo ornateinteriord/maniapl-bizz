@@ -237,9 +237,6 @@ export const useUpdateMemberStatus = () => {
       return response.data;
     },
     onSuccess: () => {
-      toast.success('Member activated successfully!');
-      
-      // Invalidate and refetch queries
       queryClient.invalidateQueries({ queryKey: ['allMembers'] });
 
     },

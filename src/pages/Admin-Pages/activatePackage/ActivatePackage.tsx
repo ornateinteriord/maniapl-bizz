@@ -1,4 +1,3 @@
-// ActivatePackage.tsx
 import React, { useState } from 'react';
 import {
   Box,
@@ -27,8 +26,9 @@ import {
   Search,
   Warning,
 } from '@mui/icons-material';
-import { useGetMemberDetails, useUpdateMemberStatus } from '../../../api/Admin';
+import { useGetMemberDetails } from '../../../api/Admin';
 import { useActivatePackage } from '../../../api/Memeber';
+
 
 interface PackageOption {
   value: string;
@@ -43,9 +43,11 @@ const ActivatePackage = () => {
   const [selectedPackage, setSelectedPackage] = useState<string>('');
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
 
-  const { data: selectedMember, isLoading: isSearching, refetch: refetchMember } = useGetMemberDetails(searchedMemberId);
-  const { mutate: updateMemberStatus, isPending: isUpdatingStatus } = useUpdateMemberStatus();
-  const { mutate: activatePackage, isPending: isActivatingPackage } = useActivatePackage();
+  const { data: selectedMember, isLoading: isSearching } = useGetMemberDetails(searchedMemberId);
+
+
+  const { mutate: activatePackage, isPending: isActivating } = useActivatePackage();
+
 
   const packageOptions: PackageOption[] = [
     { value: '2600', label: 'Standard Package - ₹2600', amount: 2600 },
@@ -58,44 +60,21 @@ const ActivatePackage = () => {
   };
 
   // Handle activation
-  const handleActivate = () => {
+  const handleActivate = async () => {
     if (!selectedMember || selectedMember.status === 'active') return;
 
-    // First activate the package
     activatePackage(selectedMember.Member_id, {
       onSuccess: (response) => {
         if (response.success) {
-          // Then update member status to active
-          updateMemberStatus(
-            { 
-              memberId: selectedMember.Member_id, // Use the actual member ID from selectedMember
-              status: 'active' 
-            },
-            {
-              onSuccess: (statusResponse) => {
-                if (statusResponse.success) {
-                  setShowConfirmDialog(false);
-                  // Reset form after successful activation
-                  setMemberId('');
-                  setSearchedMemberId('');
-                  setSelectedPackage('');
-                  // Refetch member details to update the UI
-                  refetchMember();
-                }
-              },
-              onError: (statusError) => {
-                console.error('Failed to update member status:', statusError);
-                // Even if status update fails, package is activated
-                setShowConfirmDialog(false);
-                refetchMember(); // Still refetch to get latest data
-              }
-            }
-          );
+          setShowConfirmDialog(false);
+          // Reset form after successful activation
+          setMemberId('');
+          setSearchedMemberId('');
+          setSelectedPackage('');
+          // You might want to refetch member details here to update the UI
         }
       },
-      onError: (error) => {
-        console.error('Failed to activate package:', error);
-      }
+      // Error is already handled in the mutation's onError
     });
   };
 
@@ -115,10 +94,9 @@ const ActivatePackage = () => {
 
   const primaryColor = '#6b21a8';
   const backgroundColor = '#ffff';
-  const isActivating = isActivatingPackage || isUpdatingStatus;
 
   return (
-    <Box sx={{ minHeight: '100vh', py: 4, backgroundColor: backgroundColor, mt: 4 }}>
+    <Box sx={{ minHeight: '100vh', py: 4, backgroundColor: backgroundColor , mt:4}}>
       <Container maxWidth="md">
         {/* Header */}
         <Box textAlign="center" mb={4}>
@@ -240,7 +218,7 @@ const ActivatePackage = () => {
                         selectedMember.status === 'Inactive' ? <Cancel /> : <Warning/>
                       }
                       label={
-                        selectedMember.status === 'active' ? 'Active' : 
+                        selectedMember.status === 'active' ? 'active' : 
                         selectedMember.status === 'Inactive' ? 'Inactive' : 'Pending'
                       }
                       color={
@@ -295,53 +273,37 @@ const ActivatePackage = () => {
                 )}
 
                 {/* Action Buttons */}
-                <Box display="flex" flexDirection="column" gap={2}>
+                <Box display="flex" gap={2}>
                   {selectedMember.status === 'Pending' ? (
                     <>
-                      <Box display="flex" gap={2} justifyContent="space-between">
-                        <Button
-                          variant="contained"
-                          onClick={() => setShowConfirmDialog(true)}
-                          fullWidth
-                          sx={{
-                            backgroundColor: primaryColor,
-                            '&:hover': {
-                              backgroundColor: '#581c87',
-                            },
-                            py: 1.5,
-                          }}
-                        >
-                          Activate Package
-                        </Button>
-
-                        <Button
-                          variant="outlined"
-                          onClick={handleReset}
-                          sx={{
-                            borderColor: 'grey.400',
-                            color: 'text.primary',
-                            minWidth: '120px',
-                            py: 1.5,
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </Box>
+                      <Button
+                        variant="contained"
+                        onClick={() => setShowConfirmDialog(true)}
+                        disabled={!selectedPackage}
+                        fullWidth
+                        sx={{
+                          backgroundColor: primaryColor,
+                          '&:hover': {
+                            backgroundColor: '#581c87',
+                          },
+                          py: 1.5
+                        }}
+                      >
+                        Activate Package
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        onClick={handleReset}
+                        sx={{
+                          borderColor: 'grey.400',
+                          color: 'text.primary',
+                          minWidth: '120px',
+                          py: 1.5
+                        }}
+                      >
+                        Cancel
+                      </Button>
                     </>
-                  ) : selectedMember.status === 'Inactive' ? (
-                    <Box
-                      sx={{
-                        backgroundColor: '#fff3cd',
-                        border: '1px solid #ffeeba',
-                        color: '#856404',
-                        p: 2,
-                        borderRadius: 1,
-                        textAlign: 'center',
-                        fontWeight: 500,
-                      }}
-                    >
-                      ⚠️ This member cannot be activated.
-                    </Box>
                   ) : (
                     <Button
                       variant="contained"
@@ -350,7 +312,7 @@ const ActivatePackage = () => {
                       sx={{
                         backgroundColor: 'grey.300',
                         color: 'grey.500',
-                        py: 1.5,
+                        py: 1.5
                       }}
                     >
                       <CheckCircle sx={{ mr: 1 }} />
@@ -378,35 +340,14 @@ const ActivatePackage = () => {
           Confirm Activation
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ backgroundColor: 'grey.50', borderRadius: 1, p: 2, mb: 2 }}>
+          <Box sx={{  backgroundColor: 'grey.50', borderRadius: 1 }}>
             <Typography variant="body1" fontWeight="medium">
               Member ID: {selectedMember?.Member_id}
             </Typography>
             <Typography variant="body1" fontWeight="medium">
               Member Name: {selectedMember?.Name}
             </Typography>
-            <Typography variant="body1" fontWeight="medium">
-              Package: {packageOptions.find(pkg => pkg.value === selectedPackage)?.label}
-            </Typography>
           </Box>
-          
-          {/* Validation message */}
-          {!selectedPackage && (
-            <Box
-              sx={{
-                backgroundColor: '#fff3cd',
-                border: '1px solid #ffeeba',
-                color: '#856404',
-                p: 2,
-                borderRadius: 1,
-                mb: 2,
-              }}
-            >
-              <Warning sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Please select a package before confirming activation.
-            </Box>
-          )}
-          
           <Typography variant="body2" color="text.secondary">
             Are you sure you want to activate this package for the member?
           </Typography>
@@ -421,17 +362,17 @@ const ActivatePackage = () => {
           </Button>
           <Button
             onClick={handleActivate}
-            disabled={isActivating || !selectedPackage}
+            disabled={isActivating}
             variant="contained"
             startIcon={isActivating ? <CircularProgress size={20} /> : <CheckCircle />}
             sx={{
-              backgroundColor: !selectedPackage ? 'grey.300' : primaryColor,
+              backgroundColor: primaryColor,
               '&:hover': {
-                backgroundColor: !selectedPackage ? 'grey.300' : '#581c87',
+                backgroundColor: '#581c87',
               },
             }}
           >
-            {isActivating ? 'Activating...' : 'Confirm Activation'}
+            {isActivating ? 'Activating...' : 'Confirm '}
           </Button>
         </DialogActions>
       </Dialog>
