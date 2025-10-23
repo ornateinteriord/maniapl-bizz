@@ -3,7 +3,7 @@ import { Card, CardContent, Typography, Box } from '@mui/material';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 
 interface DashboardCardProps {
-  amount: number;
+  amount: string | number;
   title: string;
   subTitle?: string; 
   IconComponent?: React.ElementType; 
