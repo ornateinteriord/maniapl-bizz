@@ -7,32 +7,40 @@ import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
 import DashboardCard from '../../../components/common/DashboardCard';
 import { getUserDashboardTableColumns } from '../../../utils/DataTableColumnsProvider';
 import TokenService from '../../../api/token/tokenService';
-import { useCheckSponsorReward } from '../../../api/Memeber';
+import { useCheckSponsorReward, useGetWalletOverview, useGetSponsers,  useGetMemberDetails } from '../../../api/Memeber';
 
 const UserDashboard = () => { 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   
   const memberId = TokenService.getMemberId(); 
   
-  // Use the sponsor reward hook
   const { data: sponsorRewardData } = useCheckSponsorReward(memberId);
-  console.log('Sponsor Reward Data:', sponsorRewardData); // Debug log
+  const { data: walletOverview, isLoading: walletLoading } = useGetWalletOverview(memberId);
+  const { data: sponsersData, isLoading: sponsersLoading } = useGetSponsers(memberId);
+  const { data: memberDetails, isLoading: memberLoading } = useGetMemberDetails(memberId);
+
+  const loading = walletLoading  || sponsersLoading  || memberLoading;
+
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
   };
 
   const handleClaimReward = () => {
     console.log('Claiming reward for member:', memberId);
-    console.log('Sponsor reward data:', sponsorRewardData);
-    // Add your claim reward logic here
   };
 
-  const data = [
+  const levelBenefitsAmount = walletOverview?.levelBenefits ||  0;
+  const directBenefitsAmount =  walletOverview?.directBenefits || 0;
+  const totalEarningsAmount = walletOverview?.totalBenefits || 0;
+  const totalWithdrawsAmount = walletOverview?.totalWithdrawal || 0;
+  const walletBalanceAmount = walletOverview?.balance || 0;
+
+  const tableData = [
     {
       title: "Today's Registration",
-      direct: 0,
+      direct: sponsersData?.sponsoredUsers?.length || 0,
       indirect: 0,
-      total: 0,
+      total: (sponsersData?.sponsoredUsers?.length || 0),
     },
     {
       title: "Today's Activation",
@@ -42,15 +50,15 @@ const UserDashboard = () => {
     },
     {
       title: 'Total Registration',
-      direct: 2,
-      indirect: 7,
-      total: 9,
+      direct: memberDetails?.direct_referrals?.length || 0,
+      indirect: (memberDetails?.total_team ? memberDetails.total_team - (memberDetails?.direct_referrals?.length || 0) : 0),
+      total: memberDetails?.total_team || (memberDetails?.direct_referrals?.length || 0),
     },
     {
       title: 'Total Activation',
-      direct: 1,
+      direct: 0,
       indirect: 0,
-      total: 1,
+      total: memberDetails?.status === 'active' ? 1 : 0,
     },
     {
       title: 'Current Month Activation',
@@ -77,43 +85,42 @@ const UserDashboard = () => {
 
           <div className="flex items-center gap-6 md:gap-12 text-white">
             <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">1/1</div>
+              <div className="text-xl md:text-2xl font-bold mb-2">{memberDetails ? `${memberDetails.direct_referrals?.length || 0}/${memberDetails.direct_referrals?.length || 0}` : '—'}</div>
               <div className="text-xs md:text-sm flex items-center justify-center gap-1">
                 <span className="material-icons text-base md:text-lg">person</span>
                 Direct
               </div>
             </div>
             <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">1/1</div>
+              <div className="text-xl md:text-2xl font-bold mb-2">{memberDetails ? `${memberDetails.total_team || 0}/${memberDetails.total_team || 0}` : '—'}</div>
               <div className="text-xs md:text-sm flex items-center justify-center gap-1">
                 <span className="material-icons text-base md:text-lg">groups</span>
                 Team
               </div>
             </div>
           </div>
-            {sponsorRewardData?.isEligibleForReward && (
-        <div className="flex justify-center mt-4">
-          <Button
-            variant="contained"
-            color="success"
-            onClick={handleClaimReward}
-            sx={{
-              textTransform: 'capitalize',
-              backgroundColor: '#DDAC17',
-              '&:hover': { backgroundColor: '#Ecc440' },
-              fontWeight: 'bold',
-              px: 4,
-              py: 1,
-            }}
-          >
-            Claim Reward
-          </Button>
+
+          {sponsorRewardData?.isEligibleForReward && (
+            <div className="flex justify-center mt-4">
+              <Button
+                variant="contained"
+                color="success"
+                onClick={handleClaimReward}
+                sx={{
+                  textTransform: 'capitalize',
+                  backgroundColor: '#DDAC17',
+                  '&:hover': { backgroundColor: '#Ecc440' },
+                  fontWeight: 'bold',
+                  px: 4,
+                  py: 1,
+                }}
+              >
+                Claim Reward
+              </Button>
+            </div>
+          )}
         </div>
-      )}
-        </div>
-        
       </div>
-    
 
       <Grid 
         container 
@@ -129,21 +136,22 @@ const UserDashboard = () => {
           }
         }}
       >
-        <Grid item xs={12} sm={6} md={4}>
-          <DashboardCard amount={0} title="Level Benefits" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <DashboardCard amount={180.0} title="Direct Benefits" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <DashboardCard amount={180.0} title="Total Earnings" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <DashboardCard amount={0.0} title="Total Withdraws" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <DashboardCard amount={180.0} title="Wallet Balance" />
-        </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+  <DashboardCard amount={loading ? 0 : levelBenefitsAmount} title="Level Benefits" />
+</Grid>
+<Grid item xs={12} sm={6} md={4}>
+  <DashboardCard amount={loading ? 0 : directBenefitsAmount} title="Direct Benefits" />
+</Grid>
+<Grid item xs={12} sm={6} md={4}>
+  <DashboardCard amount={loading ? 0 : totalEarningsAmount} title="Total Earnings" />
+</Grid>
+<Grid item xs={12} sm={6} md={4}>
+  <DashboardCard amount={loading ? 0 : totalWithdrawsAmount} title="Total Withdraws" />
+</Grid>
+<Grid item xs={12} sm={6} md={4}>
+  <DashboardCard amount={loading ? 0 : walletBalanceAmount} title="Wallet Balance" />
+</Grid>
+
       </Grid>
 
       <div className='mt-10 p-4 rounded shadow'>    
@@ -157,7 +165,8 @@ const UserDashboard = () => {
                 label="Filter by Date"
               />
             </div>
-            <DashboardTable data={data} columns={getUserDashboardTableColumns()} />
+
+            <DashboardTable data={tableData} columns={getUserDashboardTableColumns()} />
           </CardContent>
         </Card>
       </div>

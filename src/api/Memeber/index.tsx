@@ -7,7 +7,7 @@ import axios from "axios";
 import TokenService from "../token/tokenService";
 
 
-export const useGetMemberDetails = (userId: string) => {
+export const useGetMemberDetails = (userId: string | null) => {
   const { getUser, setUser } = useContext(UserContext);
   return useQuery({
     queryKey: ["memberDetails", userId], // Cache key
