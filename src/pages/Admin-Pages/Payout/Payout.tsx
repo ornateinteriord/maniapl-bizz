@@ -10,22 +10,19 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {  useState } from "react";
+import { useState } from "react";
 import "./Payout.scss";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DataTable from "react-data-table-component";
-import { DASHBOARD_CUTSOM_STYLE, getProccessedColumns, getRequestColumns,   } from "../../../utils/DataTableColumnsProvider";
+import { DASHBOARD_CUTSOM_STYLE, getProccessedColumns, getRequestColumns } from "../../../utils/DataTableColumnsProvider";
 import { useApproveWithdrawal, useGetApprovedWithdrawals, useGetPendingWithdrawals } from "../../../api/Memeber";
 
-
-
-interface PayoutTableProps{
-  data:any[];
-  columns:any;
-  tabTitle:any[];
-  loading?:boolean;
+interface PayoutTableProps {
+  data: any[];
+  columns: any;
+  tabTitle: any[];
+  loading?: boolean;
 }
-
 
 const Payout = () => {
   const [value, setValue] = useState(0);
@@ -33,18 +30,20 @@ const Payout = () => {
   const handleChange = (_e: any, newValue: any) => {
     setValue(newValue);
   };
+
   const renderContent = () => {
     switch (value) {
       case 0:
-        return <Requests tabTitle={"Requests"}/>;
+        return <Requests tabTitle={"Requests"} />;
       case 1:
-        return <Proccessed tabTitle={"Proccessed"}/>;
+        return <Proccessed tabTitle={"Proccessed"} />;
     }
   };
+
   return (
     <>
       <Typography variant="h4" sx={{ margin: "2rem", mt: 10 }}>
-       Payouts
+        Payouts
       </Typography>
       <Card sx={{ margin: "2rem", mt: 2 }}>
         <CardContent>
@@ -61,7 +60,6 @@ const Payout = () => {
             </Tabs>
             <Box className="tab-content">{renderContent()}</Box>
           </Box>
-        
         </CardContent>
       </Card>
     </>
@@ -70,75 +68,74 @@ const Payout = () => {
 
 export default Payout;
 
-const PayoutTable= ({data,columns,tabTitle,loading}:PayoutTableProps)=>{
-  return(
+const PayoutTable = ({ data, columns, tabTitle, loading }: PayoutTableProps) => {
+  return (
     <Accordion defaultExpanded>
-    <AccordionSummary
-      expandIcon={<ExpandMoreIcon />}
-      sx={{
-        mt: 2,
-        backgroundColor: "#7e22ce",
-        color: "#fff",
-        "& .MuiSvgIcon-root": { color: "#fff" },
-      }}
-    >
-      {tabTitle}
-    </AccordionSummary>
-    <AccordionDetails>
-      <Box
-        style={{
-          display: "flex",
-          gap: "1rem",
-          justifyContent: "flex-end",
-          marginBottom: "1rem",
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        sx={{
+          mt: 2,
+          backgroundColor: "#7e22ce",
+          color: "#fff",
+          "& .MuiSvgIcon-root": { color: "#fff" },
         }}
       >
-        <TextField
-          size="small"
-          placeholder="Search..."
-          sx={{ minWidth: 200 }}
+        {tabTitle}
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box
+          style={{
+            display: "flex",
+            gap: "1rem",
+            justifyContent: "flex-end",
+            marginBottom: "1rem",
+          }}
+        >
+          <TextField
+            size="small"
+            placeholder="Search..."
+            sx={{ minWidth: 200 }}
+          />
+        </Box>
+        <DataTable
+          columns={columns}
+          data={data}
+          pagination
+          customStyles={DASHBOARD_CUTSOM_STYLE}
+          paginationPerPage={25}
+          progressPending={loading}
+          paginationRowsPerPageOptions={[25, 50, 100]}
+          highlightOnHover
+          noDataComponent={<div>No data available</div>}
         />
-      </Box>
-      <DataTable
-        columns={columns}
-        data={data}
-        pagination
-        customStyles={DASHBOARD_CUTSOM_STYLE}
-        paginationPerPage={25}
-        progressPending={loading}
-        paginationRowsPerPageOptions={[25, 50, 100]}
-        highlightOnHover
-        noDataComponent={<div>No data available</div>}
-      />
-    </AccordionDetails>
-  </Accordion>
-  )
-}
+      </AccordionDetails>
+    </Accordion>
+  );
+};
 
-export const Requests = ({ tabTitle }: { tabTitle:any})=>{
-
-  const {data:pending = [] , isFetching} = useGetPendingWithdrawals();
-  const {mutate : approveTrasaction, isPending} = useApproveWithdrawal()
-  return (
-    <PayoutTable
-    data={pending?.length > 0 ? pending : []}
-    columns={getRequestColumns(approveTrasaction)}
-    tabTitle={tabTitle} 
-    loading={isFetching || isPending}
-    />
-  )
-}
-
-export const  Proccessed =({ tabTitle }: { tabTitle:any})=>{
-  
-  const {data:Approved , isFetching,} = useGetApprovedWithdrawals()
+export const Requests = ({ tabTitle }: { tabTitle: any }) => {
+  const { data: pending = [], isFetching } = useGetPendingWithdrawals();
+  const { mutate: approveTransaction, isPending } = useApproveWithdrawal();
 
   return (
     <PayoutTable
-    data={Approved}
-    columns={getProccessedColumns()}
-    tabTitle={tabTitle} 
-    loading={isFetching}
+      data={pending?.length > 0 ? pending : []}
+      columns={getRequestColumns(approveTransaction)}
+      tabTitle={tabTitle}
+      loading={isFetching || isPending}
     />
-  )
-}
+  );
+};
+
+export const Proccessed = ({ tabTitle }: { tabTitle: any }) => {
+  const { data: Approved, isFetching } = useGetApprovedWithdrawals();
+
+  return (
+    <PayoutTable
+      data={Approved || []}
+      columns={getProccessedColumns()}
+      tabTitle={tabTitle}
+      loading={isFetching}
+    />
+  );
+};

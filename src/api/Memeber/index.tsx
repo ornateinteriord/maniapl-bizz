@@ -300,10 +300,9 @@ export const useImageKitUpload = (username: string) => {
   });
 };
 
-
 export const useGetPendingWithdrawals = () => {
   return useQuery({
-    queryKey: ["pendingWithdrawals"],
+    queryKey: ["withdrawals", "pending"], 
     queryFn: async () => {
       const response = await get("/user/trasactions/Pending");
       if (response.success) {
@@ -317,36 +316,47 @@ export const useGetPendingWithdrawals = () => {
 
 export const useGetApprovedWithdrawals = () => {
   return useQuery({
-    queryKey: ["pendingWithdrawals"],
+    queryKey: ["withdrawals", "completed"], 
     queryFn: async () => {
       const response = await get("/user/trasactions/Completed");
       if (response.success) {
         return response.data;
       } else {
-        throw new Error(response.message || "Failed to fetch pending withdrawals");
+        throw new Error(response.message || "Failed to fetch completed withdrawals");
       }
     }
   });
 };
 
-// Approve withdrawal
 export const useApproveWithdrawal = () => {
   const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: async (transactionId) => {
       return await put(`/user/approve-withdrawal/${transactionId}`);
     },
+    onMutate: async (transactionId) => {
+      await queryClient.cancelQueries({ queryKey: ['withdrawals', 'pending'] });
+      
+      const previousPending = queryClient.getQueryData(['withdrawals', 'pending']);
+
+      queryClient.setQueryData(['withdrawals', 'pending'], (old: any) => 
+        old ? old.filter((t: any) => t.transaction_id !== transactionId) : old
+      );
+      
+      return { previousPending };
+    },
     onSuccess: (response) => {
       if (response.success) {
         toast.success(response.message);
-        queryClient.invalidateQueries({ queryKey: ["pendingWithdrawals"] });
+        queryClient.invalidateQueries({ queryKey: ["withdrawals", "completed"] });
       } else {
         toast.error(response.message);
       }
     },
-    // onError: (error) => {
-    //   toast.error(error.response?.data?.message || "Failed to approve withdrawal");
-    // }
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['withdrawals', 'pending'] });
+    },
   });
 };
 
