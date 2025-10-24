@@ -22,9 +22,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../../hooks/use-auth";
 import TokenService from "../../api/token/tokenService";
 import { deepOrange } from "@mui/material/colors";
-import { useContext, useState } from "react";
-import UserContext from "../../context/user/userContext";
-import { getFormattedDate } from "../../utils/common";
+import {  useState } from "react";
+import { useGetMemberDetails } from "../../api/Memeber";
 
 
 const Navbar = ({
@@ -38,7 +37,12 @@ const Navbar = ({
   const location = useLocation();
   const { isLoggedIn, userRole } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { user } = useContext(UserContext);
+
+  // Get logged-in userId from TokenService
+  const userId = TokenService.getMemberId();
+
+  // Fetch member details using your custom hook
+  const { data: memberDetails } = useGetMemberDetails(userId);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -54,6 +58,7 @@ const Navbar = ({
     window.dispatchEvent(new Event("storage"));
     setAnchorEl(null);
   };
+
   const isHomePage = location.pathname === "/";
   const isAdmin = userRole === "ADMIN";
 
@@ -80,6 +85,7 @@ const Navbar = ({
           >
             MSCS
           </Typography>
+
           <div style={{ marginLeft: "auto" }}>
             {isLoggedIn ? (
               <div className="admin-panel-container">
@@ -90,10 +96,12 @@ const Navbar = ({
                       alt="User Avatar"
                       sx={{ width: 40, height: 40, background: deepOrange[500] }}
                     >
-                      {user?.username?.charAt(0).toUpperCase()}
+                      {memberDetails?.Name
+                        ? memberDetails.Name.charAt(0).toUpperCase()
+                        : "U"}
                     </Avatar>
                     <Typography variant="body1" sx={{ color: "white" }}>
-                      Admin Portal
+                      {memberDetails?.Name || "Admin"}
                     </Typography>
                     <ChevronDown
                       color="white"
@@ -118,11 +126,12 @@ const Navbar = ({
                 )}
               </div>
             ) : (
-              // Login button removed - users will be directed to login page directly
               <div></div>
             )}
           </div>
         </Toolbar>
+
+        {/* Dropdown Menu */}
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -148,17 +157,22 @@ const Navbar = ({
                 background: deepOrange[500],
               }}
             >
-              {user?.username ? user.username.charAt(0).toUpperCase() : ""}
+              {memberDetails?.name
+                ? memberDetails.name.charAt(0).toUpperCase()
+                : ""}
             </Avatar>
             <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-              {getFormattedDate(user?.username)}
+              {memberDetails?.name || "Member"}
             </Typography>
           </div>
+
           <Divider />
+
           <MenuItem onClick={handleMenuClose}>
             <User size={18} style={{ marginRight: "8px" }} />
             My Profile
           </MenuItem>
+
           <MenuItem
             onClick={() => {
               navigate("/admin/update-password");
@@ -170,12 +184,10 @@ const Navbar = ({
           </MenuItem>
 
           <Divider />
+
           <div className="admin-panel-menuitems">
             <MenuItem onClick={handleMenuClose} sx={{ display: "flex" }}>
-              <Lock
-                size={17}
-                style={{ marginRight: "4px", color: "#007bff" }}
-              />
+              <Lock size={17} style={{ marginRight: "4px", color: "#007bff" }} />
               Lock
             </MenuItem>
             <MenuItem onClick={handleLogout} sx={{ display: "flex" }}>

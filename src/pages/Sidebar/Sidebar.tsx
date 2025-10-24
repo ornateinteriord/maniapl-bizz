@@ -80,7 +80,7 @@ const Sidebar = ({isOpen, onClose , role }: {isOpen: boolean, onClose: () => voi
             </Avatar>
             <div className="welcome-text" style={{padding: '10px', color: '#fff'}}>
               <Typography>Welcome,</Typography>
-              <Typography style={{fontWeight: 'bold'}}>MSCS</Typography>
+              <Typography style={{fontWeight: 'bold'}}>{fethedUser?.Name}</Typography>
             </div>
           </motion.div>
         )}
