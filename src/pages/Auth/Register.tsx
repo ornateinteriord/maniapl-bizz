@@ -209,20 +209,6 @@ const Register = () => {
               Create Account
             </Typography>
             
-            {refCode && (
-              <Typography
-                variant="body2"
-                sx={{ 
-                  color: "#10b981", 
-                  marginBottom: "15px", 
-                  textAlign: "center",
-                  fontStyle: "italic"
-                }}
-              >
-                You were referred by someone! Sponsor code has been auto-filled.
-              </Typography>
-            )}
-            
             <Typography
               variant="body1"
               sx={{ color: "#7e22ce", marginBottom: "15px", width: "50%" }}

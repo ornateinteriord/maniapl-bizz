@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, Grid, Typography, Button } from '@mui/material';
+import { Card, CardContent, Grid, Typography, Button, Link } from '@mui/material';
 import { cn } from '../../../lib/utils';
 import '../../Dashboard/dashboard.scss';
 import DashboardTable from '../../Dashboard/DashboardTable';
@@ -135,41 +135,54 @@ const UserDashboard = () => {
             </div>
           )}
 
-          <div className="flex flex-col items-center gap-1">
-             
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: '#f3e8ff',
-                  maxWidth: '200px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {memberDetails?.Member_id ? 
-                  `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : 
-                  'Loading...'
-                }
-              </Typography>
-               <Button
-                variant="contained"
-                startIcon={<ContentCopyIcon />}
-                onClick={handleCopyReferralLink}
-                disabled={!memberDetails?.Member_id}
-                sx={{
-                  backgroundColor: '#ffffff',
-                  color: '#6b21a8',
-                  '&:hover': {
-                    backgroundColor: '#f3e8ff',
-                  },
-                  fontWeight: 'bold',
-                  textTransform: 'none',
-                }}
-              >
-                Referral Link
-              </Button>
-            </div>
+        
+<div className="flex flex-col items-center gap-1">
+  <Link
+    href={memberDetails?.Member_id ? `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : '#'}
+    target="_blank" 
+    rel="noopener noreferrer"
+    sx={{
+      color:'#ffff',
+      textDecoration: 'none',
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }}
+  >
+    <Typography 
+      variant="caption" 
+      sx={{ 
+        color: 'aqua',
+        maxWidth: '200px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {memberDetails?.Member_id ? 
+        `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : 
+        'Loading...'
+      }
+    </Typography>
+  </Link>
+  <Button
+    variant="contained"
+    startIcon={<ContentCopyIcon />}
+    onClick={handleCopyReferralLink}
+    disabled={!memberDetails?.Member_id}
+    sx={{
+      backgroundColor: '#ffffff',
+      color: '#6b21a8',
+      '&:hover': {
+        backgroundColor: '#f3e8ff',
+      },
+      fontWeight: 'bold',
+      textTransform: 'none',
+    }}
+  >
+    Referral Link
+  </Button>
+</div>
 
         </div>
       </div>
