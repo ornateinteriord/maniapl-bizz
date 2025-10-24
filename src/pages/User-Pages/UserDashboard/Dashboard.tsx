@@ -8,7 +8,8 @@ import DashboardCard from '../../../components/common/DashboardCard';
 import { getUserDashboardTableColumns } from '../../../utils/DataTableColumnsProvider';
 import TokenService from '../../../api/token/tokenService';
 import { useCheckSponsorReward, useGetWalletOverview, useGetSponsers,  useGetMemberDetails } from '../../../api/Memeber';
-
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { toast } from 'react-toastify';
 const UserDashboard = () => { 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   
@@ -27,6 +28,20 @@ const UserDashboard = () => {
 
   const handleClaimReward = () => {
     console.log('Claiming reward for member:', memberId);
+  };
+
+              const handleCopyReferralLink = () => {
+    if (!memberDetails?.Member_id) return;
+    
+    const referralLink = `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}`;
+    
+    navigator.clipboard.writeText(referralLink)
+      .then(() => {
+        toast.success('Referral link copied to clipboard!');
+      })
+      .catch(() => {
+        toast.error('Failed to copy referral link');
+      });
   };
 
   const levelBenefitsAmount = walletOverview?.levelBenefits ||  0;
@@ -119,6 +134,43 @@ const UserDashboard = () => {
               </Button>
             </div>
           )}
+
+          <div className="flex flex-col items-center gap-1">
+             
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: '#f3e8ff',
+                  maxWidth: '200px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {memberDetails?.Member_id ? 
+                  `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : 
+                  'Loading...'
+                }
+              </Typography>
+               <Button
+                variant="contained"
+                startIcon={<ContentCopyIcon />}
+                onClick={handleCopyReferralLink}
+                disabled={!memberDetails?.Member_id}
+                sx={{
+                  backgroundColor: '#ffffff',
+                  color: '#6b21a8',
+                  '&:hover': {
+                    backgroundColor: '#f3e8ff',
+                  },
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                }}
+              >
+                Referral Link
+              </Button>
+            </div>
+
         </div>
       </div>
 
