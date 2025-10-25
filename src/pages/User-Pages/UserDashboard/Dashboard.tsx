@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, Grid, Typography, Button, Link } from '@mui/material';
+import { Card, CardContent, Grid, Typography, Button, Link, Box } from '@mui/material';
 import { cn } from '../../../lib/utils';
 import '../../Dashboard/dashboard.scss';
 import DashboardTable from '../../Dashboard/DashboardTable';
@@ -9,7 +9,9 @@ import { getUserDashboardTableColumns } from '../../../utils/DataTableColumnsPro
 import TokenService from '../../../api/token/tokenService';
 import { useCheckSponsorReward, useGetWalletOverview, useGetSponsers,  useGetMemberDetails } from '../../../api/Memeber';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ShareIcon from '@mui/icons-material/Share';
 import { toast } from 'react-toastify';
+
 const UserDashboard = () => { 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   
@@ -30,7 +32,7 @@ const UserDashboard = () => {
     console.log('Claiming reward for member:', memberId);
   };
 
-              const handleCopyReferralLink = () => {
+  const handleCopyReferralLink = () => {
     if (!memberDetails?.Member_id) return;
     
     const referralLink = `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}`;
@@ -42,6 +44,25 @@ const UserDashboard = () => {
       .catch(() => {
         toast.error('Failed to copy referral link');
       });
+  };
+
+  const handleShareReferralLink = () => {
+    if (!memberDetails?.Member_id) return;
+    
+    const referralLink = `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Join me!',
+        text: 'Check out this amazing platform and join using my referral link!',
+        url: referralLink,
+      })
+      .then(() => console.log('Successful share'))
+      .catch((error) => console.log('Error sharing:', error));
+    } else {
+      // Fallback: copy to clipboard
+      handleCopyReferralLink();
+    }
   };
 
   const levelBenefitsAmount = walletOverview?.levelBenefits ||  0;
@@ -134,58 +155,148 @@ const UserDashboard = () => {
               </Button>
             </div>
           )}
-
-        
-<div className="flex flex-col items-center gap-1">
-  <Link
-    href={memberDetails?.Member_id ? `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : '#'}
-    target="_blank" 
-    rel="noopener noreferrer"
-    sx={{
-      color:'#ffff',
-      textDecoration: 'none',
-      '&:hover': {
-        textDecoration: 'underline',
-      },
-    }}
-  >
-    <Typography 
-      variant="caption" 
-      sx={{ 
-        color: 'aqua',
-        maxWidth: '200px',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {memberDetails?.Member_id ? 
-        `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : 
-        'Loading...'
-      }
-    </Typography>
-  </Link>
-  <Button
-    variant="contained"
-    startIcon={<ContentCopyIcon />}
-    onClick={handleCopyReferralLink}
-    disabled={!memberDetails?.Member_id}
-    sx={{
-      backgroundColor: '#ffffff',
-      color: '#6b21a8',
-      '&:hover': {
-        backgroundColor: '#f3e8ff',
-      },
-      fontWeight: 'bold',
-      textTransform: 'none',
-    }}
-  >
-    Referral Link
-  </Button>
-</div>
-
         </div>
       </div>
+
+      <Box 
+        sx={{ 
+          mx: { xs: 2, sm: 3, md: 4 },
+          my: 1.5,
+          p: 2,
+          backgroundColor: '#f8f5ff',
+          borderRadius: 2,
+          border: '1px solid #e9d5ff',
+          boxShadow: '0 2px 8px rgba(107, 33, 168, 0.1)',
+        }}
+      >
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            mb: 1, 
+            color: '#7e22ce',
+            fontWeight: 'bold',
+            textAlign: 'center'
+          }}
+        >
+          Your Referral Link
+        </Typography>
+        
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: 'center',
+            gap: 2,
+            justifyContent: 'center'
+          }}
+        >
+          {/* Referral Link Display */}
+          <Box 
+            sx={{ 
+              flexGrow: 1,
+              maxWidth: { sm: '400px', md: '500px' },
+              width: '100%'
+            }}
+          >
+            <Link
+              href={memberDetails?.Member_id ? `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : '#'}
+              target="_blank" 
+              rel="noopener noreferrer"
+              sx={{
+                color: '#6b21a8',
+                textDecoration: 'none',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+                display: 'block',
+                p: 1.5,
+                backgroundColor: 'white',
+                borderRadius: 1,
+                border: '1px solid #d8b4fe',
+                wordBreak: 'break-all',
+                textAlign: 'center',
+                fontSize: { xs: '0.8rem', sm: '0.9rem' }
+              }}
+            >
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: '#6b21a8',
+                  fontWeight: 'medium',
+                }}
+              >
+                {memberDetails?.Member_id ? 
+                  `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : 
+                  'Loading...'
+                }
+              </Typography>
+            </Link>
+          </Box>
+
+          {/* Action Buttons */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              gap: 1,
+              flexDirection: { xs: 'row', sm: 'column', md: 'row' },
+              width: { xs: '100%', sm: 'auto' },
+              justifyContent: { xs: 'space-between', sm: 'center' }
+            }}
+          >
+            <Button
+              variant="contained"
+              startIcon={<ContentCopyIcon />}
+              onClick={handleCopyReferralLink}
+              disabled={!memberDetails?.Member_id}
+              sx={{
+                backgroundColor: '#6b21a8',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#581c87',
+                },
+                fontWeight: 'bold',
+                textTransform: 'none',
+                minWidth: { xs: '140px', sm: 'auto' }
+              }}
+            >
+              Copy Link
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<ShareIcon />}
+              onClick={handleShareReferralLink}
+              disabled={!memberDetails?.Member_id}
+              sx={{
+                borderColor: '#6b21a8',
+                color: '#6b21a8',
+                '&:hover': {
+                  backgroundColor: '#f3e8ff',
+                  borderColor: '#581c87',
+                },
+                fontWeight: 'bold',
+                textTransform: 'none',
+                minWidth: { xs: '140px', sm: 'auto' }
+              }}
+            >
+              Share Link
+            </Button>
+          </Box>
+        </Box>
+        
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            display: 'block',
+            textAlign: 'center',
+            mt: 1,
+            color: '#6b21a8',
+            opacity: 0.8
+          }}
+        >
+          Share this link with friends and earn rewards when they join!
+        </Typography>
+      </Box>
 
       <Grid 
         container 
@@ -193,7 +304,7 @@ const UserDashboard = () => {
         sx={{ 
           mx: { xs: 1, sm: 2 }, 
           my: 2,
-          pt: 5,
+          pt: 3,
           pr: 7,
           width: 'auto',
           '& .MuiGrid-item': {
@@ -201,22 +312,21 @@ const UserDashboard = () => {
           }
         }}
       >
-      <Grid item xs={12} sm={6} md={4}>
-  <DashboardCard amount={loading ? 0 : levelBenefitsAmount} title="Level Benefits" />
-</Grid>
-<Grid item xs={12} sm={6} md={4}>
-  <DashboardCard amount={loading ? 0 : directBenefitsAmount} title="Direct Benefits" />
-</Grid>
-<Grid item xs={12} sm={6} md={4}>
-  <DashboardCard amount={loading ? 0 : totalEarningsAmount} title="Total Earnings" />
-</Grid>
-<Grid item xs={12} sm={6} md={4}>
-  <DashboardCard amount={loading ? 0 : totalWithdrawsAmount} title="Total Withdraws" />
-</Grid>
-<Grid item xs={12} sm={6} md={4}>
-  <DashboardCard amount={loading ? 0 : walletBalanceAmount} title="Wallet Balance" />
-</Grid>
-
+        <Grid item xs={12} sm={6} md={4}>
+          <DashboardCard amount={loading ? 0 : levelBenefitsAmount} title="Level Benefits" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <DashboardCard amount={loading ? 0 : directBenefitsAmount} title="Direct Benefits" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <DashboardCard amount={loading ? 0 : totalEarningsAmount} title="Total Earnings" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <DashboardCard amount={loading ? 0 : totalWithdrawsAmount} title="Total Withdraws" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <DashboardCard amount={loading ? 0 : walletBalanceAmount} title="Wallet Balance" />
+        </Grid>
       </Grid>
 
       <div className='mt-10 p-4 rounded shadow'>    

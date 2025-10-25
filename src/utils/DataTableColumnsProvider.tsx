@@ -967,25 +967,56 @@ export const getMultiLevelColumns = () => [
   },
 ];
 
-export const getadminLevelBenifitsColumns =()=>[
+
+export const getAdminDailyBenifitsColumns = () => [
   {
     name: "Date",
     selector: (row: any) => getFormattedDate(row.date),
     sortable: true,
   },
   {
-    name: "Member",
-    selector: (row: any) => row.Member,
+    name: "Member ID",
+    selector: (row: any) => row.member_id || "N/A",
     sortable: true,
   },
   {
-    name: "Daily Benifits Payouts",
-    selector: (row: any) => row.amount,
+    name: "Gross Profit",
+    selector: (row: any) => row.gross_profit || "0.00",
+    sortable: true,
+    format: (row: any) => `₹${parseFloat(row.gross_profit || 0).toFixed(2)}`,
+  },
+ 
+];
+
+
+export const getAdminLevelBenifitsColumns = () => [
+  {
+    name: "Date",
+    selector: (row: any) => getFormattedDate(row.date || row.createdAt || row.transactionDate),
     sortable: true,
   },
-  
-]
-
+  {
+    name: "Payout Level",
+    selector: (row: any) => row.payoutLevel || row.level || row.description || "N/A",
+    sortable: true,
+  },
+  {
+    name: "Sponser_id",
+    selector: (row: any) => row.member_id || row.memberName || row.userId || row.user?.name || "N/A",
+    sortable: true,
+  },
+   {
+    name: "memberId",
+    selector: (row: any) => row.related_member_id || row.memberName || row.userId || row.user?.name || "N/A",
+    sortable: true,
+  },
+  {
+    name: "Amount",
+    selector: (row: any) => row.daily_earnings.gross_profit || row.amount || row.benefitAmount || "0",
+    sortable: true,
+    format: (row: any) => `$${parseFloat(row.amount || row.ew_credit || row.benefitAmount || 0).toFixed(2)}`,
+  },
+];
 
 
 const TABLE_ROW_CUSTOM_STYLE = {
