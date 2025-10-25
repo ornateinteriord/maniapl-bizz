@@ -246,3 +246,19 @@ export const useUpdateMemberStatus = () => {
     }
   });
 };
+
+export const useGetAllDailyPayouts = () => {
+  return useQuery({
+    queryKey: ["admin-daily-payouts"],
+    queryFn: async () => {
+      const response = await get("/admin/all-daily-payouts"); 
+      console.log('123:',response);
+      if (response?.success) {
+        return response?.data?.daily_earnings || [];
+        
+      } else {
+        throw new Error(response?.data?.message || "Failed to fetch all daily payouts");
+      }
+    },
+  });
+};

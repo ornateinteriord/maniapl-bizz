@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -7,23 +8,52 @@ import {
   CardContent,
   TextField,
   Typography,
+  CircularProgress
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DataTable from "react-data-table-component";
 import {
   DASHBOARD_CUTSOM_STYLE,
-  getadminLevelBenifitsColumns,
+  getAdminDailyBenifitsColumns,
+
 } from "../../../utils/DataTableColumnsProvider";
+import { useGetAllDailyPayouts } from '../../../api/Admin';
+
 
 const DailyBenifitsPayouts = () => {
-  const data = [{}];
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Properly destructure the useQuery return values
+  const { data: dailyBenefits, isLoading, isError } = useGetAllDailyPayouts();
+  console.log(dailyBenefits);
+
+  // Handle the data structure from API
+  const filteredData = dailyBenefits?.filter((benefit: any) =>
+    Object.values(benefit).some(
+      value => 
+        value && 
+        value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  ) || [];
+
   const noDataComponent = (
-    <div style={{ padding: "24px" }}>No data available in table</div>
+    <div style={{ padding: "24px" }}>
+      {isError ? "Error loading data" : "No data available in table"}
+    </div>
   );
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <>
       <Typography variant="h4" sx={{ margin: "2rem", mt: 10 }}>
-        Daily benefits Payouts
+        Daily Benefits Payouts
       </Typography>
       <Card sx={{ margin: "2rem", mt: 2 }}>
         <CardContent>
@@ -36,7 +66,7 @@ const DailyBenifitsPayouts = () => {
                 "& .MuiSvgIcon-root": { color: "#fff" },
               }}
             >
-              List of Daily benefits Payouts
+              List of Daily Benefits Payouts
             </AccordionSummary>
             <AccordionDetails>
               <Box
@@ -50,12 +80,14 @@ const DailyBenifitsPayouts = () => {
                 <TextField
                   size="small"
                   placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   sx={{ minWidth: 200 }}
                 />
               </Box>
               <DataTable
-                columns={getadminLevelBenifitsColumns()}
-                data={data}
+                columns={getAdminDailyBenifitsColumns()}
+                data={filteredData}
                 pagination
                 customStyles={DASHBOARD_CUTSOM_STYLE}
                 paginationPerPage={25}
