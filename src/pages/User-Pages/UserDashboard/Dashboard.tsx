@@ -1,5 +1,18 @@
 import { useState } from 'react';
-import { Card, CardContent, Grid, Typography, Button, Link, Box } from '@mui/material';
+import { 
+  Card, 
+  CardContent, 
+  Grid, 
+  Typography, 
+  Button, 
+  Link, 
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText 
+} from '@mui/material';
 import { cn } from '../../../lib/utils';
 import '../../Dashboard/dashboard.scss';
 import DashboardTable from '../../Dashboard/DashboardTable';
@@ -7,13 +20,14 @@ import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
 import DashboardCard from '../../../components/common/DashboardCard';
 import { getUserDashboardTableColumns } from '../../../utils/DataTableColumnsProvider';
 import TokenService from '../../../api/token/tokenService';
-import { useCheckSponsorReward, useGetWalletOverview, useGetSponsers,  useGetMemberDetails } from '../../../api/Memeber';
+import { useCheckSponsorReward, useGetWalletOverview, useGetSponsers,  useGetMemberDetails, useClimeLoan } from '../../../api/Memeber';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareIcon from '@mui/icons-material/Share';
 import { toast } from 'react-toastify';
 
 const UserDashboard = () => { 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   
   const memberId = TokenService.getMemberId(); 
   
@@ -21,6 +35,8 @@ const UserDashboard = () => {
   const { data: walletOverview, isLoading: walletLoading } = useGetWalletOverview(memberId);
   const { data: sponsersData, isLoading: sponsersLoading } = useGetSponsers(memberId);
   const { data: memberDetails, isLoading: memberLoading } = useGetMemberDetails(memberId);
+  const { mutate: climeLoan, isPending: isClaiming } = useClimeLoan();
+
 
   const loading = walletLoading  || sponsersLoading  || memberLoading;
 
@@ -29,8 +45,34 @@ const UserDashboard = () => {
   };
 
   const handleClaimReward = () => {
-    console.log('Claiming reward for member:', memberId);
+    setClaimDialogOpen(true);
   };
+
+  const handleCloseDialog = () => {
+    setClaimDialogOpen(false);
+  };
+
+  const handleConfirmClaim = () => {
+  if (!memberId) {
+    toast.error("Member ID not found!");
+    return;
+  }
+
+  const payload = {
+    amount: 5000,
+    note: "Need urgent support for loan",
+  };
+
+  climeLoan(
+    { memberId, data: payload },
+    {
+      onSuccess: () => {
+        setClaimDialogOpen(false);
+      },
+    }
+  );
+};
+
 
   const handleCopyReferralLink = () => {
     if (!memberDetails?.Member_id) return;
@@ -157,6 +199,104 @@ const UserDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Claim Reward Dialog */}
+      <Dialog
+        open={claimDialogOpen}
+        onClose={handleCloseDialog}
+        aria-labelledby="claim-reward-dialog-title"
+        aria-describedby="claim-reward-dialog-description"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            padding: 1,
+            minWidth: { xs: '300px', sm: '400px' }
+          }
+        }}
+      >
+        <DialogTitle 
+          id="claim-reward-dialog-title"
+          sx={{ 
+            textAlign: 'center',
+            color: '#7e22ce',
+            fontWeight: 'bold',
+            fontSize: '1.5rem',
+            pb: 1
+          }}
+        >
+          🎉 Congratulations!
+        </DialogTitle>
+        
+        <DialogContent>
+          <DialogContentText 
+            id="claim-reward-dialog-description"
+            sx={{
+              textAlign: 'center',
+              color: '#4b5563',
+              fontSize: '1.1rem',
+              mb: 2
+            }}
+          >
+            You are eligible for a loan amount of{' '}
+            <Typography 
+              component="span" 
+              sx={{ 
+                color: '#DDAC17', 
+                fontWeight: 'bold',
+                fontSize: '1.2rem'
+              }}
+            >
+              ₹5,000
+            </Typography>
+          </DialogContentText>
+          
+          <DialogContentText 
+            sx={{
+              textAlign: 'center',
+              color: '#6b7280',
+              fontSize: '0.9rem'
+            }}
+          >
+            This reward has been credited to your account. You can use this amount for your future investments or withdraw it to your bank account.
+          </DialogContentText>
+        </DialogContent>
+        
+        <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3, pt: 1 }}>
+          <Button
+            onClick={handleCloseDialog}
+            variant="outlined"
+            sx={{
+              textTransform: 'capitalize',
+              borderColor: '#6b7280',
+              color: '#6b7280',
+              '&:hover': {
+                borderColor: '#4b5563',
+                backgroundColor: '#f3f4f6',
+              },
+              fontWeight: 'bold',
+              px: 4,
+            }}
+          >
+            Cancel
+          </Button>
+        <Button
+  onClick={handleConfirmClaim}
+  variant="contained"
+  autoFocus
+  disabled={isClaiming}
+  sx={{
+    textTransform: 'capitalize',
+    backgroundColor: '#DDAC17',
+    '&:hover': { backgroundColor: '#Ecc440' },
+    fontWeight: 'bold',
+    px: 4,
+  }}
+>
+  {isClaiming ? 'Processing...' : 'Claim Now'}
+</Button>
+
+        </DialogActions>
+      </Dialog>
 
       <Box 
         sx={{ 

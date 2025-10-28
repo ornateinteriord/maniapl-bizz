@@ -16,6 +16,10 @@ import {
   RadioGroup,
   Checkbox,
   FormHelperText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
@@ -46,6 +50,11 @@ const Register = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [genderError, setGenderError] = useState(false);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [registrationData, setRegistrationData] = useState<{memberId: string; password: string}>({
+    memberId: '',
+    password: ''
+  });
   
   const { 
     data: sponsorData,
@@ -166,12 +175,31 @@ const Register = () => {
         ...formData // Spread all other form data
       };
 
-      mutate(finalData);
-      navigate("/login");
+      mutate(finalData, {
+        onSuccess: (response) => {
+          if (response.success) {
+            setRegistrationData({
+              memberId: response.user.Member_id, 
+              password: formData.password
+            });
+            setSuccessDialogOpen(true);
+          }
+        },
+        onError: (error) => {
+          setErrorMessage(error.response?.data?.message || "Registration failed");
+        }
+      });
+
     } catch (error) {
       console.error("Registration failed:", error);
       setErrorMessage("Registration failed. Please try again.");
     }
+  };
+
+  const handleCloseDialog = () => {
+    setSuccessDialogOpen(false);
+    // Navigate to login after closing dialog
+    navigate("/login");
   };
 
   return (
@@ -566,6 +594,68 @@ const Register = () => {
             </Typography>
           </CardContent>
         </Card>
+
+        {/* Success Dialog */}
+        <Dialog
+          open={successDialogOpen}
+          onClose={handleCloseDialog}
+          aria-labelledby="registration-success-dialog"
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle 
+            id="registration-success-dialog"
+            sx={{ 
+              backgroundColor: '#7e22ce', 
+              color: 'white',
+              textAlign: 'center'
+            }}
+          >
+            Registration Successful!
+          </DialogTitle>
+          <DialogContent sx={{ padding: '2rem' }}>
+            <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
+              New Member Created Successfully
+            </Typography>
+            <div style={{ 
+              backgroundColor: '#f8fafc', 
+              padding: '1.5rem', 
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                <strong>Member ID:</strong> {registrationData.memberId}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Password:</strong> {registrationData.password}
+              </Typography>
+            </div>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                mt: 2, 
+                color: '#64748b'
+              }}
+            >
+              Please save these credentials securely. The member ID will be used for login.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ padding: '1rem 2rem 2rem' }}>
+            <Button 
+              onClick={handleCloseDialog}
+              variant="contained"
+              sx={{
+                textTransform: "capitalize",
+                backgroundColor: '#7e22ce',
+                '&:hover': {
+                  backgroundColor: '#581c87'
+                }
+              }}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
       {(isLoading || isPending) && <LoadingComponent />}
     </Container>
