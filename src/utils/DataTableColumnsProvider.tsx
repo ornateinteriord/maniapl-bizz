@@ -772,42 +772,42 @@ export const getHolidaysColumns = () => [
 export const getRequestColumns = (approveTrasaction: (id : any) => void) =>[
   {
     name: "Date",
-    selector: (row: any) => getFormattedDate(row.transaction_date),
+    selector: (row: any) => getFormattedDate(row.transaction_date) || "-",
     sortable: true,
   },
   {
     name: "Member",
-    selector: (row: any) => row.member_id,
+    selector: (row: any) => row.member_id || "-",
     sortable: true,
   },
   {
     name: "Mobile No.",
-    selector: (row: any) =>row.memberDetails.mobileno,
+    selector: (row: any) =>row.memberDetails.mobileno || "-",
     sortable: true,
   },
   {
     name: "Account No.",
-    selector: (row: any) => row.memberDetails.account_number,
+    selector: (row: any) => row.memberDetails.account_number|| "-",
     sortable: true,
   },
   {
     name: "IFSC Code",
-    selector: (row: any) => row.memberDetails.ifsc_code,
+    selector: (row: any) => row.memberDetails.ifsc_code || "-",
     sortable: true,
   },
   {
     name: "Paid Amount",
-    selector: (row: any) => row.ew_debit,
+    selector: (row: any) => row.ew_debit || "-",
     sortable: true,
   },
   {
     name: "Deducted",
-    selector: (row: any) => row.deduction,
+    selector: (row: any) => row.deduction || "-",
     sortable: true,
   },
   {
     name: "Status",
-    selector: (row: any) => row.status,
+    selector: (row: any) => row.status || "-",
     sortable: true,
   },
   {
@@ -815,7 +815,7 @@ export const getRequestColumns = (approveTrasaction: (id : any) => void) =>[
     selector: (_row: any) => {
       return (
         <>
-        <Button variant="contained" onClick={()=>approveTrasaction(_row.transaction_id)}>Approve</Button>
+        <Button variant="contained" onClick={()=>approveTrasaction(_row.transaction_id)}>Approve</Button> 
         </>
       )
     },
@@ -826,37 +826,37 @@ export const getRequestColumns = (approveTrasaction: (id : any) => void) =>[
 export const getProccessedColumns = () =>[
   {
     name: "Date",
-    selector: (row: any) => getFormattedDate(row.transaction_date),
+    selector: (row: any) => getFormattedDate(row.transaction_date) || "-",
     sortable: true,
   },
   {
     name: "Member",
-    selector: (row: any) => row.member_id,
+    selector: (row: any) => row.member_id || "-",
     sortable: true,
   },
   {
     name: "Mobile No.",
-    selector: (row: any) =>row.memberDetails?.mobileno,
+    selector: (row: any) =>row.memberDetails?.mobileno || "-",
     sortable: true,
   },
   {
     name: "Account No.",
-    selector: (row: any) => row.memberDetails?.account_number,
+    selector: (row: any) => row.memberDetails?.account_number || "-",
     sortable: true,
   },
   {
     name: "IFSC Code",
-    selector: (row: any) => row.memberDetails?.ifsc_code,
+    selector: (row: any) => row.memberDetails?.ifsc_code || "-",
     sortable: true,
   },
   {
     name: "Paid Amount",
-    selector: (row: any) => row.net_amount,
+    selector: (row: any) => row.net_amount || "-",
     sortable: true,
   },
   {
     name: "Deducted",
-    selector: (row: any) => row.deduction,
+    selector: (row: any) => row.deduction || "-",
     sortable: true,
   },
   

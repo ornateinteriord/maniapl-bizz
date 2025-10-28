@@ -191,6 +191,7 @@ export const useCheckSponsorReward = (memberId: any) => {
     queryFn: async () => {
       if (!memberId) return Promise.resolve({}); 
       const response = await get(`/user/check-sponsor-reward/${memberId}`);
+      console.log("sponser reard:",response)
       return response; 
     },
     enabled: !!memberId,
@@ -252,21 +253,24 @@ export const useGetMultiLevelSponsorship = () => {
 
 export const useActivatePackage = () => {
   return useMutation({
-    mutationFn: async (memberId: any) => {
-      return await put(`/user/activate-package/${memberId}`, {
+    mutationFn: async (data: { memberId: string; packageType: string }) => {
+      return await put(`/user/activate-package/${data.memberId}`, {
+        packageType: data.packageType,
         activatedAt: new Date().toISOString()
       });
     },
     onSuccess: (response) => {
       if (response.success) {
-        toast.success(response.message);
+        toast.success(response.message || "Package activated successfully!");
       } else {
-        console.error("Activation failed:", response.message);
+        const errorMessage = response.message || "Activation failed";
+        console.error("Activation failed:", errorMessage);
+        toast.error(errorMessage);
       }
     },
     onError: (err: any) => {
-      const errorMessage = err.response?.data?.message;
-      console.error("Activation error:", errorMessage);
+      let errorMessage = "An unexpected error occurred";
+      console.error("Activation error:", errorMessage, err);
       toast.error(errorMessage);
     },
   });
@@ -378,7 +382,8 @@ export const useGetDailyPayout = (memberId: any) => {
   return useQuery({
     queryKey: ["daily-payout", memberId],
     queryFn: async () => {
-      const response = await get(`/user/daily/${memberId}`);
+      const response = await get(`/user/daily-payout/${memberId}`);
+      console.log('API res:', response)
       if (response?.success) {
         return response?.data?.daily_earnings || [];
       } else {
@@ -386,5 +391,25 @@ export const useGetDailyPayout = (memberId: any) => {
       }
     },
     enabled: !!memberId,
+  });
+};
+
+export const useClimeLoan = () => {
+  return useMutation({
+    mutationFn: async ({ memberId, data }: { memberId: string; data: any }) => {
+      const response = await post(`/user/clime-reward-loan/${memberId}`, data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data?.message || "Reward loan claimed successfully!");
+    },
+    onError: (error: any) => {
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to claim reward loan.";
+      toast.error(errorMsg);
+      console.error("Error in useClimeLoan:", error);
+    },
   });
 };

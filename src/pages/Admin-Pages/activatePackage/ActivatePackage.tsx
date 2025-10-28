@@ -29,7 +29,6 @@ import {
 import { useGetMemberDetails } from '../../../api/Admin';
 import { useActivatePackage } from '../../../api/Memeber';
 
-
 interface PackageOption {
   value: string;
   label: string;
@@ -44,13 +43,12 @@ const ActivatePackage = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
 
   const { data: selectedMember, isLoading: isSearching } = useGetMemberDetails(searchedMemberId);
-
-
   const { mutate: activatePackage, isPending: isActivating } = useActivatePackage();
 
-
+  // ✅ Added RD package
   const packageOptions: PackageOption[] = [
-    { value: '2600', label: 'Standard Package - ₹2600', amount: 2600 },
+    { value: 'standard', label: 'Standard Package - ₹2600', amount: 2600 },
+    { value: 'RD', label: 'RD Package - ₹1000', amount: 1000 },
   ];
 
   // Handle member ID search
@@ -61,21 +59,21 @@ const ActivatePackage = () => {
 
   // Handle activation
   const handleActivate = async () => {
-    if (!selectedMember || selectedMember.status === 'active') return;
+    if (!selectedMember) return;
 
-    activatePackage(selectedMember.Member_id, {
-      onSuccess: (response) => {
-        if (response.success) {
-          setShowConfirmDialog(false);
-          // Reset form after successful activation
-          setMemberId('');
-          setSearchedMemberId('');
-          setSelectedPackage('');
-          // You might want to refetch member details here to update the UI
-        }
-      },
-      // Error is already handled in the mutation's onError
-    });
+    activatePackage(
+      { memberId: selectedMember.Member_id, packageType: selectedPackage },
+      {
+        onSuccess: (response) => {
+          if (response.success) {
+            setShowConfirmDialog(false);
+            setMemberId('');
+            setSearchedMemberId('');
+            setSelectedPackage('');
+          }
+        },
+      }
+    );
   };
 
   // Reset form
@@ -85,28 +83,20 @@ const ActivatePackage = () => {
     setSelectedPackage('');
   };
 
-  // Handle Enter key press in search field
+  // Handle Enter key press
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearchMember();
-    }
+    if (e.key === 'Enter') handleSearchMember();
   };
 
   const primaryColor = '#6b21a8';
   const backgroundColor = '#ffff';
 
   return (
-    <Box sx={{ minHeight: '100vh', py: 4, backgroundColor: backgroundColor , mt:4}}>
+    <Box sx={{ minHeight: '100vh', py: 4, backgroundColor: backgroundColor, mt: 4 }}>
       <Container maxWidth="md">
         {/* Header */}
         <Box textAlign="center" mb={4}>
-          <Typography 
-            variant="h3" 
-            component="h1" 
-            fontWeight="bold" 
-            color="#000" 
-            gutterBottom
-          >
+          <Typography variant="h3" component="h1" fontWeight="bold" color="#000" gutterBottom>
             Activate Package
           </Typography>
           <Typography variant="h6" color="purple.100">
@@ -115,21 +105,11 @@ const ActivatePackage = () => {
         </Box>
 
         {/* Main Card */}
-        <Card 
-          sx={{ 
-            mb: 4, 
-            backgroundColor: backgroundColor,
-            boxShadow: 3
-          }}
-        >
+        <Card sx={{ mb: 4, backgroundColor: backgroundColor, boxShadow: 3 }}>
           <CardContent sx={{ p: 4 }}>
             {/* Search Section */}
             <Box mb={4}>
-              <Typography 
-                variant="h6" 
-                gutterBottom 
-                sx={{ color: 'text.primary' }}
-              >
+              <Typography variant="h6" gutterBottom sx={{ color: 'text.primary' }}>
                 Enter Member ID
               </Typography>
               <Box display="flex" gap={2} alignItems="flex-start">
@@ -142,15 +122,9 @@ const ActivatePackage = () => {
                   onKeyPress={handleKeyPress}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: primaryColor,
-                      },
-                      '&:hover fieldset': {
-                        borderColor: primaryColor,
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: primaryColor,
-                      },
+                      '& fieldset': { borderColor: primaryColor },
+                      '&:hover fieldset': { borderColor: primaryColor },
+                      '&.Mui-focused fieldset': { borderColor: primaryColor },
                     },
                   }}
                 />
@@ -161,11 +135,9 @@ const ActivatePackage = () => {
                   startIcon={isSearching ? <CircularProgress size={20} /> : <Search />}
                   sx={{
                     backgroundColor: primaryColor,
-                    '&:hover': {
-                      backgroundColor: '#581c87',
-                    },
+                    '&:hover': { backgroundColor: '#581c87' },
                     minWidth: '120px',
-                    height: '56px'
+                    height: '56px',
                   }}
                 >
                   {isSearching ? 'Searching...' : 'Search'}
@@ -174,23 +146,23 @@ const ActivatePackage = () => {
             </Box>
 
             {selectedMember && (
-              <Paper 
-                variant="outlined" 
-                sx={{ 
-                  p: 3, 
-                  mb: 3, 
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 3,
+                  mb: 3,
                   borderColor: primaryColor,
-                  backgroundColor: 'background.default'
+                  backgroundColor: 'background.default',
                 }}
               >
-                <Typography 
-                  variant="h5" 
-                  gutterBottom 
+                <Typography
+                  variant="h5"
+                  gutterBottom
                   sx={{ color: primaryColor, fontWeight: 'medium' }}
                 >
                   Member Details
                 </Typography>
-                
+
                 <Grid container spacing={3} mb={3}>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="body2" color="text.secondary">
@@ -214,16 +186,27 @@ const ActivatePackage = () => {
                     </Typography>
                     <Chip
                       icon={
-                        selectedMember.status === 'active' ? <CheckCircle /> : 
-                        selectedMember.status === 'Inactive' ? <Cancel /> : <Warning/>
+                        selectedMember.status === 'active' ? (
+                          <CheckCircle />
+                        ) : selectedMember.status === 'Inactive' ? (
+                          <Cancel />
+                        ) : (
+                          <Warning />
+                        )
                       }
                       label={
-                        selectedMember.status === 'active' ? 'active' : 
-                        selectedMember.status === 'Inactive' ? 'Inactive' : 'Pending'
+                        selectedMember.status === 'active'
+                          ? 'active'
+                          : selectedMember.status === 'Inactive'
+                          ? 'Inactive'
+                          : 'Pending'
                       }
                       color={
-                        selectedMember.status === 'active' ? 'success' : 
-                        selectedMember.status === 'Inactive' ? 'error' : 'warning'
+                        selectedMember.status === 'active'
+                          ? 'success'
+                          : selectedMember.status === 'Inactive'
+                          ? 'error'
+                          : 'warning'
                       }
                       variant="outlined"
                     />
@@ -238,87 +221,70 @@ const ActivatePackage = () => {
                   </Grid>
                 </Grid>
 
-                {selectedMember.status === 'Pending' && (
-                  <Box mb={3}>
-                    <FormControl fullWidth>
-                      <InputLabel id="package-select-label">Select Package</InputLabel>
-                      <Select
-                        labelId="package-select-label"
-                        value={selectedPackage}
-                        label="Select Package"
-                        onChange={(e) => setSelectedPackage(e.target.value)}
-                        sx={{
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: primaryColor,
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: primaryColor,
-                          },
-                        }}
-                      >
-                        <MenuItem value="">
-                          <em>Select a package</em>
+                {/* Package Selection - Always shown regardless of status */}
+                <Box mb={3}>
+                  <FormControl fullWidth>
+                    <InputLabel id="package-select-label">Select Package</InputLabel>
+                    <Select
+                      labelId="package-select-label"
+                      value={selectedPackage}
+                      label="Select Package"
+                      onChange={(e) => setSelectedPackage(e.target.value)}
+                      sx={{
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: primaryColor,
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: primaryColor,
+                        },
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>Select a package</em>
+                      </MenuItem>
+                      {packageOptions.map((pkg) => (
+                        <MenuItem key={pkg.value} value={pkg.value}>
+                          {pkg.label}
                         </MenuItem>
-                        {packageOptions.map((pkg) => (
-                          <MenuItem key={pkg.value} value={pkg.value}>
-                            {pkg.label}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                      ₹2600 package is available for activation
-                    </Typography>
-                  </Box>
-                )}
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 1, display: 'block' }}
+                  >
+                    Select the desired package to activate
+                  </Typography>
+                </Box>
 
                 {/* Action Buttons */}
                 <Box display="flex" gap={2}>
-                  {selectedMember.status === 'Pending' ? (
-                    <>
-                      <Button
-                        variant="contained"
-                        onClick={() => setShowConfirmDialog(true)}
-                        disabled={!selectedPackage}
-                        fullWidth
-                        sx={{
-                          backgroundColor: primaryColor,
-                          '&:hover': {
-                            backgroundColor: '#581c87',
-                          },
-                          py: 1.5
-                        }}
-                      >
-                        Activate Package
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        onClick={handleReset}
-                        sx={{
-                          borderColor: 'grey.400',
-                          color: 'text.primary',
-                          minWidth: '120px',
-                          py: 1.5
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      disabled
-                      fullWidth
-                      sx={{
-                        backgroundColor: 'grey.300',
-                        color: 'grey.500',
-                        py: 1.5
-                      }}
-                    >
-                      <CheckCircle sx={{ mr: 1 }} />
-                      Already Active
-                    </Button>
-                  )}
+                  <Button
+                    variant="contained"
+                    onClick={() => setShowConfirmDialog(true)}
+                    disabled={!selectedPackage}
+                    fullWidth
+                    sx={{
+                      backgroundColor: primaryColor,
+                      '&:hover': { backgroundColor: '#581c87' },
+                      py: 1.5,
+                    }}
+                  >
+                    Activate Package
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={handleReset}
+                    sx={{
+                      borderColor: 'grey.400',
+                      color: 'text.primary',
+                      minWidth: '120px',
+                      py: 1.5,
+                    }}
+                  >
+                    Cancel
+                  </Button>
                 </Box>
               </Paper>
             )}
@@ -333,31 +299,34 @@ const ActivatePackage = () => {
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { backgroundColor: backgroundColor }
+          sx: { backgroundColor: backgroundColor },
         }}
       >
         <DialogTitle sx={{ color: primaryColor, fontWeight: 'medium' }}>
           Confirm Activation
         </DialogTitle>
         <DialogContent>
-          <Box sx={{  backgroundColor: 'grey.50', borderRadius: 1 }}>
+          <Box sx={{ backgroundColor: 'grey.50', borderRadius: 1 }}>
             <Typography variant="body1" fontWeight="medium">
               Member ID: {selectedMember?.Member_id}
             </Typography>
             <Typography variant="body1" fontWeight="medium">
               Member Name: {selectedMember?.Name}
             </Typography>
+            <Typography variant="body1" fontWeight="medium">
+              Current Status: {selectedMember?.status}
+            </Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary">
-            Are you sure you want to activate this package for the member?
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Are you sure you want to activate the{' '}
+            <strong>
+              {selectedPackage === 'standard' ? 'Standard ₹2600' : 'RD ₹1000'}
+            </strong>{' '}
+            package for this member?
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setShowConfirmDialog(false)}
-            disabled={isActivating}
-            variant="outlined"
-          >
+          <Button onClick={() => setShowConfirmDialog(false)} disabled={isActivating} variant="outlined">
             Cancel
           </Button>
           <Button
@@ -367,12 +336,10 @@ const ActivatePackage = () => {
             startIcon={isActivating ? <CircularProgress size={20} /> : <CheckCircle />}
             sx={{
               backgroundColor: primaryColor,
-              '&:hover': {
-                backgroundColor: '#581c87',
-              },
+              '&:hover': { backgroundColor: '#581c87' },
             }}
           >
-            {isActivating ? 'Activating...' : 'Confirm '}
+            {isActivating ? 'Activating...' : 'Confirm'}
           </Button>
         </DialogActions>
       </Dialog>
