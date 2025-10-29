@@ -1,10 +1,10 @@
 export interface SideBarMenuItemType {
-    name: string;
-    icon: JSX.Element;
-    path?: string;
-    isExpandable?: boolean;
-    subItems?: Array<{ name: string; path: string; icon: JSX.Element }>;
-  }
+  name: string;
+  icon: JSX.Element;
+  path?: string;
+  isExpandable?: boolean;
+  subItems?: SideBarMenuItemType[]; 
+}
 
 export interface MemberDetails {
   Member_id: string;

@@ -12,8 +12,6 @@ import {
   PersonIcon,
   VerifiedUserIcon,
   LockIcon,
-  // InventoryIcon,
-  // HistoryIcon,
   PeopleIcon,
   AccountTreeIcon,
   PersonAddIcon,
@@ -22,8 +20,6 @@ import {
   SupportIcon,
   AnnouncementIcon,
   EventIcon,
-  // RequestQuoteIcon,
-  // ReceiptLongIcon,
   SmsIcon,
 } from "../Icons";
 
@@ -202,6 +198,41 @@ export const AdminSideBarMenuItems: SideBarMenuItemType[] = [
       },
     ],
   },
+
+  
+
+{
+  name: "Loans",
+  icon: <CreditCardIcon />,
+  isExpandable: true,
+  subItems: [
+    { 
+      name: "Loan Pending", 
+      path: "/admin/member/pending", 
+      icon: <CreditCardIcon /> 
+    },
+    { 
+      name: " Loan Processed", 
+      path: "/admin/member/processed", 
+      icon: <CreditCardIcon /> 
+    },
+   
+  ],
+},
+{
+  name: "Repayments",
+  icon: <PaymentsIcon />,
+  isExpandable: true,
+  subItems: [
+    { 
+      name: "Repayments List", 
+      path: "/admin/repayments/list", 
+      icon: <PaymentsIcon /> 
+    },
+  ],
+},
+
+
   {
     name: "Payout",
     icon: <CreditCardIcon />,

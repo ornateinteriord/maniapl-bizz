@@ -3,6 +3,7 @@ import  VisibilityIcon  from '@mui/icons-material/Visibility';
 import {  Edit } from "lucide-react";
 import { getFormattedDate } from './common';
 import { MemberDetails } from "../store/store";
+import { PaymentsIcon } from "../pages/Icons";
 
 
 export const getUserDashboardTableColumns = () => [
@@ -1043,3 +1044,162 @@ export const DASHBOARD_CUTSOM_STYLE = {
     },
   },
 };
+
+
+export const getPendingLoansColumns = (processLoan: (id: any) => void) => [
+  {
+    name: "Date",
+    selector: (row: any) => getFormattedDate(row.transaction_date) || "-",
+    sortable: true,
+  },
+  {
+    name: "Member ID",
+    selector: (row: any) => row.member_id || "-",
+    sortable: true,
+  },
+  {
+    name: "Member Name",
+    selector: (row: any) => row.memberDetails?.name || "-",
+    sortable: true,
+  },
+  {
+    name: "Mobile No.",
+    selector: (row: any) => row.memberDetails?.mobileno || "-",
+    sortable: true,
+  },
+  {
+    name: "Loan Amount",
+    selector: (row: any) => `₹${row.loan_amount?.toLocaleString()}` || "-",
+    sortable: true,
+  },
+  {
+    name: "Status",
+    selector: (row: any) => row.status || "-",
+    sortable: true,
+    cell: (row: any) => (
+      <span className={`status-badge ${row.status?.toLowerCase()}`}>
+        {row.status}
+      </span>
+    ),
+  },
+  {
+    name: "Action",
+    selector: (_row: any) => {
+      return (
+        <>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={() => processLoan(_row.loan_id)}
+          >
+            Approve
+          </Button>
+        </>
+      )
+    },
+    sortable: false,
+  },
+];
+
+
+export const getProcessedLoansColumns = () => [
+ {
+    name: "Date",
+    selector: (row: any) => getFormattedDate(row.transaction_date) || "-",
+    sortable: true,
+  },
+  {
+    name: "Member ID",
+    selector: (row: any) => row.member_id || "-",
+    sortable: true,
+  },
+  {
+    name: "Member Name",
+    selector: (row: any) => row.memberDetails?.name || "-",
+    sortable: true,
+  },
+  {
+    name: "Mobile No.",
+    selector: (row: any) => row.memberDetails?.mobileno || "-",
+    sortable: true,
+  },
+  {
+    name: "Loan Amount",
+    selector: (row: any) => `₹${row.loan_amount?.toLocaleString()}` || "-",
+    sortable: true,
+  },
+
+  {
+    name: "Status",
+    selector: (row: any) => row.status || "-",
+    sortable: true,
+    cell: (row: any) => (
+      <span className={`status-badge ${row.status?.toLowerCase()}`}>
+        {row.status}
+      </span>
+    ),
+  },
+];
+
+export const getLoansListColumns = (onRepay: (loanId: number) => void) => [
+  {
+    name: "Date",
+    selector: (row: any) => row.transaction_date || "-",
+    sortable: true,
+  },
+  {
+    name: "Member ID",
+    selector: (row: any) => row.member_id || "-",
+    sortable: true,
+  },
+  {
+    name: "Mobile No.",
+    selector: (row: any) => row.memberDetails?.mobileno || "-",
+    sortable: true,
+  },
+  {
+    name: "Loan Amount",
+    selector: (row: any) => `₹${row.loan_amount?.toLocaleString()}` || "-",
+    sortable: true,
+  },
+  {
+    name: "Total Paid",
+    selector: (row: any) => `₹${row.total_paid?.toLocaleString()}` || "-",
+    sortable: true,
+  },
+  {
+    name: "Status",
+    selector: (row: any) => row.status || "-",
+    sortable: true,
+    cell: (row: any) => (
+      <span className={`status-badge ${row.status?.toLowerCase()}`}>
+        {row.status}
+      </span>
+    ),
+  },
+ {
+  name: "Action",
+  cell: (row: any) => (
+    <Button 
+      variant="contained"
+      size="small"
+      onClick={() => onRepay(row.id)}
+      sx={{
+        backgroundColor: '#7e22ce',
+        color: 'white',
+        '&:hover': {
+          backgroundColor: '#6b21a8',
+        },
+        textTransform: 'none',
+        fontWeight: 'bold',
+        fontSize: '0.875rem',
+        px: 2,
+        py: 0.5
+      }}
+    >
+      Repay
+    </Button>
+  ),
+},
+];
+
