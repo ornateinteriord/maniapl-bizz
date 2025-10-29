@@ -1046,7 +1046,7 @@ export const DASHBOARD_CUTSOM_STYLE = {
 };
 
 
-export const getPendingLoansColumns = (processLoan: (id: any) => void) => [
+export const getPendingLoansColumns = (processLoan: (memberId: string, action: 'approve' | 'reject') => void) => [
   {
     name: "Date",
     selector: (row: any) => getFormattedDate(row.transaction_date) || "-",
@@ -1059,17 +1059,17 @@ export const getPendingLoansColumns = (processLoan: (id: any) => void) => [
   },
   {
     name: "Member Name",
-    selector: (row: any) => row.memberDetails?.name || "-",
+    selector: (row: any) => row.Name || "-",
     sortable: true,
   },
   {
     name: "Mobile No.",
-    selector: (row: any) => row.memberDetails?.mobileno || "-",
+    selector: (row: any) => row.mobileno || "-",
     sortable: true,
   },
   {
     name: "Loan Amount",
-    selector: (row: any) => `₹${row.loan_amount?.toLocaleString()}` || "-",
+    selector: (row: any) => row.ew_credit || "-",
     sortable: true,
   },
   {
@@ -1084,26 +1084,33 @@ export const getPendingLoansColumns = (processLoan: (id: any) => void) => [
   },
   {
     name: "Action",
-    selector: (_row: any) => {
-      return (
-        <>
-          <Button 
-            variant="contained" 
-            color="primary"
-            onClick={() => processLoan(_row.loan_id)}
-          >
-            Approve
-          </Button>
-        </>
-      )
-    },
+    cell: (row: any) => (
+      <div className="action-buttons">
+        <Button 
+          variant="contained" 
+          color="success"
+          size="small"
+          onClick={() => processLoan(row.member_id, 'approve')}
+          style={{ marginRight: '8px' }}
+        >
+          Approve
+        </Button>
+        <Button 
+          variant="outlined" 
+          color="error"
+          size="small"
+          onClick={() => processLoan(row.member_id, 'reject')}
+        >
+          Reject
+        </Button>
+      </div>
+    ),
     sortable: false,
   },
 ];
 
-
 export const getProcessedLoansColumns = () => [
- {
+  {
     name: "Date",
     selector: (row: any) => getFormattedDate(row.transaction_date) || "-",
     sortable: true,
@@ -1115,20 +1122,19 @@ export const getProcessedLoansColumns = () => [
   },
   {
     name: "Member Name",
-    selector: (row: any) => row.memberDetails?.name || "-",
+    selector: (row: any) => row.Name || "-",
     sortable: true,
   },
   {
     name: "Mobile No.",
-    selector: (row: any) => row.memberDetails?.mobileno || "-",
+    selector: (row: any) => row.mobileno || "-",
     sortable: true,
   },
   {
     name: "Loan Amount",
-    selector: (row: any) => `₹${row.loan_amount?.toLocaleString()}` || "-",
+    selector: (row: any) => `₹${parseInt(row.ew_credit || 0).toLocaleString()}` || "-",
     sortable: true,
   },
-
   {
     name: "Status",
     selector: (row: any) => row.status || "-",

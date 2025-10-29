@@ -10,7 +10,6 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  TableSortLabel,
   TextField,
   InputAdornment,
   Card,
@@ -21,68 +20,26 @@ import {
   Grid,
   Button,
   Chip,
+
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  CheckCircle as CheckCircleIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { getProcessedLoansColumns } from '../../../utils/DataTableColumnsProvider';
 import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
-
-// Mock data for processed loans
-const mockProcessedLoans = [
-  {
-    id: 1,
-    transaction_date: '2024-01-10',
-    member_id: 'MEM001',
-    memberDetails: { name: 'Rahul Sharma', mobileno: '9876543210' },
-    loan_amount: 50000,
-    status: 'Approved'
-  },
-  {
-    id: 2,
-    transaction_date: '2024-01-08',
-    member_id: 'MEM003',
-    memberDetails: { name: 'Amit Kumar', mobileno: '7654321098' },
-    loan_amount: 100000,
-    status: 'Approved'
-  },
-  {
-    id: 3,
-    transaction_date: '2024-01-05',
-    member_id: 'MEM005',
-    memberDetails: { name: 'Sneha Patel', mobileno: '6543210987' },
-    loan_amount: 75000,
-    status: 'Rejected'
-  },
-  {
-    id: 4,
-    transaction_date: '2024-01-03',
-    member_id: 'MEM007',
-    memberDetails: { name: 'Rajesh Verma', mobileno: '5432109876' },
-    loan_amount: 150000,
-    status: 'Approved'
-  },
-];
+import { useGetRewardLoansByStatus } from '../../../api/Admin';
 
 export default function Processed() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
-  const [orderBy, setOrderBy] = useState('');
-  const [order, setOrder] = useState('asc');
-  const [data] = useState(mockProcessedLoans);
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate, setToDate] = useState<string | null>(null);
 
-  const columns = getProcessedLoansColumns();
+  const { data: processedData, isLoading: processedLoading } = useGetRewardLoansByStatus("Approved");
 
-  const handleSort = (property: string) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
+  const columns = getProcessedLoansColumns();
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -93,28 +50,25 @@ export default function Processed() {
     setPage(0);
   };
 
-  const filteredData = data.filter(row =>
-    Object.values(row).some(value =>
-      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  // Safe data handling
+  const loans = processedData?.loans || [];
+  const totalCount = processedData?.totalCount || 0;
 
-  const sortedData = filteredData.sort((a, b) => {
-    if (orderBy) {
-      const column = columns.find(col => col.name === orderBy);
-      const aValue = column?.selector(a);
-      const bValue = column?.selector(b);
-      
-      if (order === 'asc') {
-        return aValue < bValue ? -1 : 1;
-      } else {
-        return aValue > bValue ? -1 : 1;
-      }
+  // Simple pagination without sorting/filtering
+  const paginatedData = loans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const getStatusChipColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved':
+        return 'success';
+      case 'rejected':
+        return 'error';
+      case 'pending':
+        return 'warning';
+      default:
+        return 'default';
     }
-    return 0;
-  });
-
-  const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  };
 
   const renderCellContent = (row: any, column: any) => {
     if (column.name === 'Status' && column.cell) {
@@ -123,34 +77,23 @@ export default function Processed() {
     return column.selector ? column.selector(row) : '-';
   };
 
-//   const getStatusChipColor = (status: string) => {
-//     switch (status?.toLowerCase()) {
-//       case 'approved':
-//         return 'success';
-//       case 'rejected':
-//         return 'error';
-//       case 'pending':
-//         return 'warning';
-//       default:
-//         return 'default';
-//     }
-//   };
+  if (processedLoading) {
+    return <Typography>Loading processed loans...</Typography>;
+  }
 
   return (
     <>
       <Grid className="filter-container" sx={{ margin: '2rem', mt: 12 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <CheckCircleIcon color="success" sx={{ fontSize: 32, mr: 2 }} />
-          <Box>
-            <Typography variant="h4" fontWeight="bold">
-              Processed Loans
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              View loans that have completed the approval workflow
-            </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box>
+              <Typography variant="h4" fontWeight="bold">
+                Processed Loans
+              </Typography>
+            </Box>
           </Box>
         </Box>
-        <Grid className="filter-actions" >
+        <Grid className="filter-actions" sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <MuiDatePicker date={fromDate} setDate={setFromDate} label="From Date" />
           <MuiDatePicker date={toDate} setDate={setToDate} label="To Date" />
           <Button
@@ -176,7 +119,7 @@ export default function Processed() {
                 '& .MuiSvgIcon-root': { color: '#fff' }
               }}
             >
-              List of Processed Loans
+              List of Processed Loans (Total: {totalCount})
             </AccordionSummary>
             <AccordionDetails>
               <Box sx={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginBottom: '1rem' }}>
@@ -209,50 +152,43 @@ export default function Processed() {
                             fontSize: '14px'
                           }}
                         >
-                          {column.sortable ? (
-                            <TableSortLabel
-                              active={orderBy === column.name}
-                              onClick={() => handleSort(column.name)}
-                              sx={{ 
-                                color: 'white !important',
-                                '& .MuiTableSortLabel-icon': {
-                                  color: 'white !important'
-                                }
-                              }}
-                            >
-                              {column.name}
-                            </TableSortLabel>
-                          ) : (
-                            column.name
-                          )}
+                          {column.name}
                         </TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginatedData.map((row) => (
-                      <TableRow 
-                        key={row.id}
-                        sx={{ 
-                          '&:nth-of-type(odd)': { backgroundColor: 'action.hover' },
-                          '&:hover': { backgroundColor: 'action.selected' }
-                        }}
-                      >
-                        {columns.map((column) => (
-                          <TableCell key={`${row.id}-${column.name}`}>
-                            {column.name === 'Status' ? (
-                              <Chip 
-                                label={row.status} 
-                         
-                                size="small"
-                              />
-                            ) : (
-                              renderCellContent(row, column)
-                            )}
-                          </TableCell>
-                        ))}
+                    {paginatedData.length > 0 ? (
+                      paginatedData.map((row: any) => (
+                        <TableRow 
+                          key={row.id || row._id}
+                          sx={{ 
+                            '&:nth-of-type(odd)': { backgroundColor: 'action.hover' },
+                            '&:hover': { backgroundColor: 'action.selected' }
+                          }}
+                        >
+                          {columns.map((column) => (
+                            <TableCell key={`${row.id || row._id}-${column.name}`}>
+                              {column.name === 'Status' ? (
+                                <Chip 
+                                  label={row.status} 
+                                  color={getStatusChipColor(row.status)}
+                                  size="small"
+                                />
+                              ) : (
+                                renderCellContent(row, column)
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} align="center">
+                          No processed loans found
+                        </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -260,7 +196,7 @@ export default function Processed() {
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
-                count={filteredData.length}
+                count={loans.length} // Use loans.length instead of processedData.length
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={handleChangePage}
