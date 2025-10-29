@@ -20,7 +20,6 @@ import {
   AccordionDetails,
   Grid,
   Button,
-  CircularProgress,
   Alert,
   Snackbar,
 } from '@mui/material';
@@ -76,7 +75,7 @@ export default function PendingLoans() {
     setOrderBy(property);
   };
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
