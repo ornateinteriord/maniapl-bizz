@@ -83,7 +83,7 @@ const Navbar = ({
             style={{ marginLeft: "12px", cursor: "pointer" }}
             onClick={() => navigate("/")}
           >
-            MSCS
+            MSI
           </Typography>
 
           <div style={{ marginLeft: "auto" }}>

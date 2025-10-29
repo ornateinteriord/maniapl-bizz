@@ -262,3 +262,43 @@ export const useGetAllDailyPayouts = () => {
     },
   });
 };
+
+
+
+export const useGetPendingRewardLoans = () => {
+  return useQuery({
+    queryKey: ["pendingRewardLoans"],
+    queryFn: async () => {
+      const response = await get("/admin/reward-loans");
+      console.log('Pending Loans Response:', response);
+      if (response.success) {
+        return response?.data || { pendingLoans: [],totalCount: 0};
+      } else {
+        throw new Error(response.message || "Failed to fetch pending reward loans");
+      }
+    },
+  });
+};
+
+export const useUpdateRewardLoanStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ loanId, status }: { loanId: string; status: string }) => {
+      return await put(`/admin/reward-loans/${loanId}`, { status });
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        toast.success(response.message);
+        queryClient.invalidateQueries({ queryKey: ["pendingRewardLoans"] });
+      } else {
+        toast.error(response.message);
+      }
+    },
+    onError: (err: any) => {
+      const errorMessage =
+        err.response?.data?.message || "An unknown error occurred while updating loan status";
+      toast.error(errorMessage);
+    },
+  });
+};

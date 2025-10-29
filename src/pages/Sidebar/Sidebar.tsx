@@ -137,7 +137,7 @@ const Sidebar = ({isOpen, onClose , role }: {isOpen: boolean, onClose: () => voi
                         transition={{ duration: 0.2 }}
                       >
                         <Link 
-                          to={subItem.path} 
+                          to={subItem.path ?? '#'} 
                           className={`sub-item ${location.pathname === subItem.path ? 'selected' : ''}`}
                           onClick={() => {
                             handleSelect(item.name);

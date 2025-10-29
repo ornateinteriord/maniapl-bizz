@@ -114,6 +114,12 @@ const UserDailyPayout = lazy(
 );
 const UserWallet = lazy(() => import("./pages/User-Pages/Wallet/Wallet"));
 
+
+const LoansMemberPending = lazy(() => import("./pages/Loans/Loanspending/Pending"));
+const LoansMemberProcessed = lazy(() => import("./pages/Loans/Loansprocesssed/Processed"));
+const LoansRepaymentsList = lazy(() => import("./pages/Loans/Repaymentlist/LoansList"));
+// const LoansRepaymentsPlaceholder = lazy(() => import("./pages/Loans/Repayments/RepaymentPlaceholder"));
+
 export const LoadingComponent = () => {
   return (
     <Dialog open={true}>
@@ -276,6 +282,13 @@ const RoutesProvider = ({
               <Route path="/admin/news" element={<AdminNews />} />
               <Route path="/admin/holidays" element={<AdminHolidays />} />
               <Route path="/admin/members/:memberId" element={<MembersUpdateForm />} />
+        
+            </Route>
+             <Route element={<ProtectedRoute allowedRoles={["ADMIN", "USER"]} />}>
+              <Route path="/admin/member/pending" element={<LoansMemberPending />} />
+              <Route path="/admin/member/processed" element={<LoansMemberProcessed />} />
+              <Route path="/admin/repayments/list" element={<LoansRepaymentsList />} />
+              {/* <Route path="/loans/repayments/placeholder" element={<LoansRepaymentsPlaceholder />} /> */}
             </Route>
 
             {/* user routes */}
@@ -325,6 +338,9 @@ const RoutesProvider = ({
               <Route path="/user/mailbox" element={<UserMailBox />} />
               <Route path="/user/wallet" element={<UserWallet />} />
             </Route>
+
+           
+
             {/* not found route */}
             <Route
               element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}
