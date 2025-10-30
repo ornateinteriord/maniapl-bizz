@@ -22,7 +22,7 @@ import {
   EventIcon,
   SmsIcon,
 } from "../Icons";
-import { CardMembershipRounded, Pending } from "@mui/icons-material";
+import { AccountBalance, CardMembershipRounded, Pending } from "@mui/icons-material";
 
 export const UserSideBarMenuItems: SideBarMenuItemType[] = [
   {
@@ -77,14 +77,25 @@ export const UserSideBarMenuItems: SideBarMenuItemType[] = [
       },
     ],
   },
-  {
+ {
     name: "Transactions",
     icon: <ShowChartIcon />,
-    path: "/user/transactions",
-    isExpandable: false,
+    isExpandable: true,
+    subItems: [
+      {
+        name: "Wallet",
+        path: "/user/transactions",
+        icon: <CreditCardIcon />,
+      },
+      {
+        name: "Loan",
+        path: "/user/loantransactions",
+        icon: <AccountBalance />,
+      },
+    ],
   },
   {
-    name: "Wallet",
+    name: "Wallet Balance",
     icon: <CreditCardIcon />,
     path: "/user/wallet",
     isExpandable: false,

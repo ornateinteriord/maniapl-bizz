@@ -11,7 +11,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  DialogContentText 
+  DialogContentText, 
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress // Added missing import
 } from '@mui/material';
 import { cn } from '../../../lib/utils';
 import '../../Dashboard/dashboard.scss';
@@ -20,7 +25,7 @@ import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
 import DashboardCard from '../../../components/common/DashboardCard';
 import { getUserDashboardTableColumns } from '../../../utils/DataTableColumnsProvider';
 import TokenService from '../../../api/token/tokenService';
-import { useCheckSponsorReward, useGetWalletOverview, useGetSponsers,  useGetMemberDetails, useClimeLoan } from '../../../api/Memeber';
+import { useCheckSponsorReward, useGetWalletOverview, useGetSponsers,  useGetMemberDetails, useClimeLoan, useGetTransactionDetails } from '../../../api/Memeber';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareIcon from '@mui/icons-material/Share';
 import { toast } from 'react-toastify';
@@ -28,7 +33,10 @@ import { toast } from 'react-toastify';
 const UserDashboard = () => { 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
-  
+  const [repaymentDialogOpen, setRepaymentDialogOpen] = useState(false);
+  const [selectedRepayAmount, setSelectedRepayAmount] = useState(500);
+  const [isProcessing, setIsProcessing] = useState(false); // Added missing state
+
   const memberId = TokenService.getMemberId(); 
   
   const { data: sponsorRewardData } = useCheckSponsorReward(memberId);
@@ -37,7 +45,25 @@ const UserDashboard = () => {
   const { data: memberDetails, isLoading: memberLoading } = useGetMemberDetails(memberId);
   const { mutate: climeLoan, isPending: isClaiming } = useClimeLoan();
 
-  const loading = walletLoading  || sponsersLoading  || memberLoading;
+  const { data: transactionsResponse, isLoading: loanStatusLoading } = useGetTransactionDetails("all");
+
+  const allTransactions = transactionsResponse?.data || [];
+  const repayConfig = transactionsResponse?.repayConfig;
+
+  const approvedLoan = Array.isArray(allTransactions) 
+    ? allTransactions.find(transaction => 
+        transaction.status?.toLowerCase() === 'approved' && 
+        (transaction.transaction_type?.includes('Loan') || transaction.benefit_type === 'loan')
+      )
+    : null;
+
+  const isLoanApproved = !!approvedLoan;
+  const loanAmount = approvedLoan?.ew_credit || 0; 
+  const dueAmount = approvedLoan?.ew_debit || 0;
+
+  const loading = walletLoading  || sponsersLoading  || memberLoading || loanStatusLoading;
+  const isRepayEnabled = repayConfig?.isEnabled || false;
+  const repayMessage = repayConfig?.message || "";
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
@@ -73,6 +99,31 @@ const UserDashboard = () => {
     );
   };
 
+  // Added missing handleRepayment function
+  const handleRepayment = () => {
+    if (!memberId) {
+      toast.error("Member ID not found!");
+      return;
+    }
+
+    if (selectedRepayAmount === 0) {
+      toast.error("Please select a repayment amount");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    // Simulate API call - replace with your actual repayment API
+    setTimeout(() => {
+      setIsProcessing(false);
+      setRepaymentDialogOpen(false);
+      toast.success(`₹${selectedRepayAmount} repayment submitted successfully!`);
+      
+      // Reset selected amount
+      setSelectedRepayAmount(500);
+    }, 2000);
+  };
+
   const handleCopyReferralLink = () => {
     if (!memberDetails?.Member_id) return;
     
@@ -101,7 +152,6 @@ const UserDashboard = () => {
       .then(() => console.log('Successful share'))
       .catch((error) => console.log('Error sharing:', error));
     } else {
-      // Fallback: copy to clipboard
       handleCopyReferralLink();
     }
   };
@@ -112,52 +162,52 @@ const UserDashboard = () => {
   const totalWithdrawsAmount = walletOverview?.totalWithdrawal || 0;
   const walletBalanceAmount = walletOverview?.balance || 0;
 
-const tableData = [
-  {
-    title: "Today's Registration",
-    direct: sponsersData?.sponsoredUsers?.filter((user:any) => user.status === 'active')?.length || 0,
-    indirect: 0, // Add logic if you track indirect today registrations
-    total: sponsersData?.sponsoredUsers?.filter((user:any) => user.status === 'active')?.length || 0,
-  },
-  {
-    title: "Today's Activation",
-    direct: sponsersData?.sponsoredUsers?.filter((user:any) => 
-      user.status === 'active' && 
-      user.activationDate?.toDateString() === new Date().toDateString()
-    )?.length || 0,
-    indirect: 0, // Add logic if needed
-    total: sponsersData?.sponsoredUsers?.filter((user:any) => 
-      user.status === 'active' && 
-      user.activationDate?.toDateString() === new Date().toDateString()
-    )?.length || 0,
-  },
-  {
-    title: 'Total Registration',
-    direct: memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0,
-    indirect: (memberDetails?.total_team || 0) - (memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0),
-    total: memberDetails?.total_team || 0,
-  },
-  {
-    title: 'Total Activation',
-    direct: memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0,
-    indirect: (memberDetails?.total_team || 0) - (memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0),
-    total: memberDetails?.total_team || 0,
-  },
-  {
-    title: 'Current Month Activation',
-    direct: memberDetails?.direct_referrals?.filter((ref:any) => 
-      ref.status === 'active' && 
-      new Date(ref.activationDate).getMonth() === new Date().getMonth() &&
-      new Date(ref.activationDate).getFullYear() === new Date().getFullYear()
-    )?.length || 0,
-    indirect: 0, // Add logic if you track monthly indirect activations
-    total: memberDetails?.direct_referrals?.filter((ref:any) => 
-      ref.status === 'active' && 
-      new Date(ref.activationDate).getMonth() === new Date().getMonth() &&
-      new Date(ref.activationDate).getFullYear() === new Date().getFullYear()
-    )?.length || 0,
-  },
-];
+  const tableData = [
+    {
+      title: "Today's Registration",
+      direct: sponsersData?.sponsoredUsers?.filter((user:any) => user.status === 'active')?.length || 0,
+      indirect: 0,
+      total: sponsersData?.sponsoredUsers?.filter((user:any) => user.status === 'active')?.length || 0,
+    },
+    {
+      title: "Today's Activation",
+      direct: sponsersData?.sponsoredUsers?.filter((user:any) => 
+        user.status === 'active' && 
+        user.activationDate?.toDateString() === new Date().toDateString()
+      )?.length || 0,
+      indirect: 0,
+      total: sponsersData?.sponsoredUsers?.filter((user:any) => 
+        user.status === 'active' && 
+        user.activationDate?.toDateString() === new Date().toDateString()
+      )?.length || 0,
+    },
+    {
+      title: 'Total Registration',
+      direct: memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0,
+      indirect: (memberDetails?.total_team || 0) - (memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0),
+      total: memberDetails?.total_team || 0,
+    },
+    {
+      title: 'Total Activation',
+      direct: memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0,
+      indirect: (memberDetails?.total_team || 0) - (memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0),
+      total: memberDetails?.total_team || 0,
+    },
+    {
+      title: 'Current Month Activation',
+      direct: memberDetails?.direct_referrals?.filter((ref:any) => 
+        ref.status === 'active' && 
+        new Date(ref.activationDate).getMonth() === new Date().getMonth() &&
+        new Date(ref.activationDate).getFullYear() === new Date().getFullYear()
+      )?.length || 0,
+      indirect: 0,
+      total: memberDetails?.direct_referrals?.filter((ref:any) => 
+        ref.status === 'active' && 
+        new Date(ref.activationDate).getMonth() === new Date().getMonth() &&
+        new Date(ref.activationDate).getFullYear() === new Date().getFullYear()
+      )?.length || 0,
+    },
+  ];
 
   return (
     <>
@@ -250,11 +300,10 @@ const tableData = [
               mb: 2
             }}
           >
-     <p>
-  You are eligible for a reward loan of{" "}
-  <span style={{ color: "gold", fontWeight: "bold" }}>₹5000</span>!
-</p>
-
+            <p>
+              You are eligible for a reward loan of{" "}
+              <span style={{ color: "gold", fontWeight: "bold" }}>₹5000</span>!
+            </p>
           </DialogContentText>
           
           <DialogContentText 
@@ -336,7 +385,6 @@ const tableData = [
             justifyContent: 'center'
           }}
         >
-          {/* Referral Link Display */}
           <Box 
             sx={{ 
               flexGrow: 1,
@@ -379,7 +427,6 @@ const tableData = [
             </Link>
           </Box>
 
-          {/* Action Buttons */}
           <Box 
             sx={{ 
               display: 'flex', 
@@ -473,7 +520,234 @@ const tableData = [
         <Grid item xs={12} sm={6} md={4}>
           <DashboardCard amount={loading ? 0 : walletBalanceAmount} title="Wallet Balance" />
         </Grid>
+        {isLoanApproved && (
+          <Grid item xs={12} sm={6} md={4}>
+            <DashboardCard
+              amount={loanAmount}
+              dueAmount={dueAmount}
+              title="Loan Amount"
+              type="loan"
+              onRepay={() => {
+                if (isRepayEnabled) {
+                  setRepaymentDialogOpen(true);
+                } else {
+                  toast.warning(repayMessage || 'Repayment option is currently disabled.');
+                }
+              }}
+            />
+          </Grid>
+        )}
       </Grid>
+
+      {/* Repayment Dialog */}
+      <Dialog
+        open={repaymentDialogOpen}
+        onClose={() => !isProcessing && setRepaymentDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 2,
+            minWidth: { xs: '320px', sm: '400px' },
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
+            background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+          },
+        }}
+      >
+        <Box
+          sx={{
+            height: 4,
+            background: 'linear-gradient(90deg, #6b21a8 0%, #a855f7 100%)',
+            borderRadius: 2,
+            mb: 1,
+          }}
+        />
+
+        <DialogTitle
+          sx={{
+            textAlign: 'center',
+            fontWeight: 'bold',
+            color: '#6b21a8',
+            fontSize: '1.4rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+          }}
+        >
+          <Box
+            component="span"
+            sx={{
+              background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
+              borderRadius: '50%',
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '1rem',
+            }}
+          >
+            💰
+          </Box>
+          Repay Your Loan
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText
+            sx={{
+              textAlign: 'center',
+              mb: 3,
+              fontSize: '1rem',
+              color: '#4b5563',
+              lineHeight: 1.6,
+            }}
+          >
+            Choose the repayment amount and confirm to proceed.
+          </DialogContentText>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="subtitle2" 
+              sx={{ 
+                color: '#6b7280', 
+                mb: 1.5,
+                fontSize: '0.85rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}
+            >
+              Loan Summary
+            </Typography>
+            
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                p: 1.5,
+                backgroundColor: '#f8fafc',
+                borderRadius: 2,
+                border: '1px solid #e2e8f0'
+              }}>
+                <Typography sx={{ color: '#64748b' }}>Total Loan</Typography>
+                <Typography sx={{ fontWeight: 600 }}>₹{loanAmount}</Typography>
+              </Box>
+              
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                p: 1.5,
+                backgroundColor: '#f0fdf4',
+                borderRadius: 2,
+                border: '1px solid #bbf7d0'
+              }}>
+                <Typography sx={{ color: '#64748b' }}>Paid</Typography>
+                <Typography sx={{ fontWeight: 600, color: '#059669' }}>
+                  ₹{loanAmount - dueAmount}
+                </Typography>
+              </Box>
+              
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                p: 1.5,
+                backgroundColor: '#fef2f2',
+                borderRadius: 2,
+                border: '1px solid #fecaca'
+              }}>
+                <Typography sx={{ color: '#64748b' }}>Due Amount</Typography>
+                <Typography sx={{ fontWeight: 700, color: '#dc2626' }}>
+                  ₹{dueAmount}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          <FormControl fullWidth size="medium" sx={{ mt: 2 }}>
+            <InputLabel sx={{ fontWeight: 500 }}>Repayment Amount</InputLabel>
+            <Select
+              value={selectedRepayAmount}
+              label="Repayment Amount"
+              onChange={(e) => setSelectedRepayAmount(Number(e.target.value))}
+              disabled={isProcessing}
+              sx={{
+                borderRadius: 2,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#d1d5db',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#6b21a8',
+                },
+              }}
+            >
+              {[500, 1000, 2000, dueAmount].filter(amount => amount <= dueAmount).map((amount) => (
+                <MenuItem 
+                  key={amount} 
+                  value={amount}
+                  sx={{ fontWeight: amount === dueAmount ? 600 : 400 }}
+                >
+                  ₹{amount} {amount === dueAmount && '(Full Payment)'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {isProcessing && (
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <CircularProgress size={20} sx={{ color: '#6b21a8' }} />
+              <Typography variant="body2" sx={{ color: '#6b7280', mt: 1 }}>
+                Processing your payment...
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ 
+          justifyContent: 'center', 
+          pb: 2,
+          pt: 1,
+          gap: 1,
+        }}>
+          <Button
+            onClick={() => setRepaymentDialogOpen(false)}
+            variant="outlined"
+            disabled={isProcessing}
+            sx={{
+              borderColor: '#d1d5db',
+              color: '#6b7280',
+              fontWeight: 600,
+              textTransform: 'capitalize',
+              borderRadius: 2,
+              px: 3,
+              '&:hover': {
+                backgroundColor: '#f3f4f6',
+                borderColor: '#9ca3af',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRepayment}
+            variant="contained"
+            disabled={isProcessing || selectedRepayAmount === 0}
+            sx={{
+              background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)',
+                boxShadow: '0 4px 12px rgba(107, 33, 168, 0.3)',
+              },
+              textTransform: 'capitalize',
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 3,
+              boxShadow: 'none',
+            }}
+          >
+            {isProcessing ? 'Processing...' : `Pay ₹${selectedRepayAmount}`}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <div className='mt-10 p-4 rounded shadow'>    
         <Card className='bg-gray-300'>

@@ -84,7 +84,10 @@ const UserPackageHistory = lazy(
   () => import("./pages/User-Pages/Packages/PackageHistory")
 );
 const UserTransaction = lazy(
-  () => import("./pages/User-Pages/Transaction/Transaction")
+  () => import("./pages/User-Pages/Transaction/WalletTransaction")
+);
+const UserLoanTransaction = lazy(
+  () => import("./pages/User-Pages/Transaction/LoanTransaction")
 );
 const UserMailBox = lazy(() => import("./pages/User-Pages/MailBox/MailBox"));
 const UserProfile = lazy(() => import("./pages/User-Pages/Profile/Profile"));
@@ -335,6 +338,7 @@ const RoutesProvider = ({
                 element={<UserDailyPayout />}
               />
               <Route path="/user/transactions" element={<UserTransaction />} />
+               <Route path="/user/loantransactions" element={<UserLoanTransaction />} />
               <Route path="/user/mailbox" element={<UserMailBox />} />
               <Route path="/user/wallet" element={<UserWallet />} />
             </Route>
