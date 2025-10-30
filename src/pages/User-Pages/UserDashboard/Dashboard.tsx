@@ -37,7 +37,6 @@ const UserDashboard = () => {
   const { data: memberDetails, isLoading: memberLoading } = useGetMemberDetails(memberId);
   const { mutate: climeLoan, isPending: isClaiming } = useClimeLoan();
 
-
   const loading = walletLoading  || sponsersLoading  || memberLoading;
 
   const handleDateChange = (date: string) => {
@@ -53,26 +52,26 @@ const UserDashboard = () => {
   };
 
   const handleConfirmClaim = () => {
-  if (!memberId) {
-    toast.error("Member ID not found!");
-    return;
-  }
-
-  const payload = {
-    amount: 5000,
-    note: "Need urgent support for loan",
-  };
-
-  climeLoan(
-    { memberId, data: payload },
-    {
-      onSuccess: () => {
-        setClaimDialogOpen(false);
-      },
+    if (!memberId) {
+      toast.error("Member ID not found!");
+      return;
     }
-  );
-};
+    const payload = {
+      note: "Requesting reward loan",
+    };
 
+    climeLoan(
+      { memberId, data: payload },
+      {
+        onSuccess: () => {
+          setClaimDialogOpen(false);
+        },
+        onError: (error: any) => {
+          toast.error(error.message || "Failed to submit loan request");
+        }
+      }
+    );
+  };
 
   const handleCopyReferralLink = () => {
     if (!memberDetails?.Member_id) return;
@@ -113,38 +112,52 @@ const UserDashboard = () => {
   const totalWithdrawsAmount = walletOverview?.totalWithdrawal || 0;
   const walletBalanceAmount = walletOverview?.balance || 0;
 
-  const tableData = [
-    {
-      title: "Today's Registration",
-      direct: sponsersData?.sponsoredUsers?.length || 0,
-      indirect: 0,
-      total: (sponsersData?.sponsoredUsers?.length || 0),
-    },
-    {
-      title: "Today's Activation",
-      direct: 0,
-      indirect: 0,
-      total: 0,
-    },
-    {
-      title: 'Total Registration',
-      direct: memberDetails?.direct_referrals?.length || 0,
-      indirect: (memberDetails?.total_team ? memberDetails.total_team - (memberDetails?.direct_referrals?.length || 0) : 0),
-      total: memberDetails?.total_team || (memberDetails?.direct_referrals?.length || 0),
-    },
-    {
-      title: 'Total Activation',
-      direct: 0,
-      indirect: 0,
-      total: memberDetails?.status === 'active' ? 1 : 0,
-    },
-    {
-      title: 'Current Month Activation',
-      direct: 0,
-      indirect: 0,
-      total: 0,
-    },
-  ];
+const tableData = [
+  {
+    title: "Today's Registration",
+    direct: sponsersData?.sponsoredUsers?.filter((user:any) => user.status === 'active')?.length || 0,
+    indirect: 0, // Add logic if you track indirect today registrations
+    total: sponsersData?.sponsoredUsers?.filter((user:any) => user.status === 'active')?.length || 0,
+  },
+  {
+    title: "Today's Activation",
+    direct: sponsersData?.sponsoredUsers?.filter((user:any) => 
+      user.status === 'active' && 
+      user.activationDate?.toDateString() === new Date().toDateString()
+    )?.length || 0,
+    indirect: 0, // Add logic if needed
+    total: sponsersData?.sponsoredUsers?.filter((user:any) => 
+      user.status === 'active' && 
+      user.activationDate?.toDateString() === new Date().toDateString()
+    )?.length || 0,
+  },
+  {
+    title: 'Total Registration',
+    direct: memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0,
+    indirect: (memberDetails?.total_team || 0) - (memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0),
+    total: memberDetails?.total_team || 0,
+  },
+  {
+    title: 'Total Activation',
+    direct: memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0,
+    indirect: (memberDetails?.total_team || 0) - (memberDetails?.direct_referrals?.filter((ref:any) => ref.status === 'active')?.length || 0),
+    total: memberDetails?.total_team || 0,
+  },
+  {
+    title: 'Current Month Activation',
+    direct: memberDetails?.direct_referrals?.filter((ref:any) => 
+      ref.status === 'active' && 
+      new Date(ref.activationDate).getMonth() === new Date().getMonth() &&
+      new Date(ref.activationDate).getFullYear() === new Date().getFullYear()
+    )?.length || 0,
+    indirect: 0, // Add logic if you track monthly indirect activations
+    total: memberDetails?.direct_referrals?.filter((ref:any) => 
+      ref.status === 'active' && 
+      new Date(ref.activationDate).getMonth() === new Date().getMonth() &&
+      new Date(ref.activationDate).getFullYear() === new Date().getFullYear()
+    )?.length || 0,
+  },
+];
 
   return (
     <>
@@ -237,17 +250,11 @@ const UserDashboard = () => {
               mb: 2
             }}
           >
-            You are eligible for a loan amount of{' '}
-            <Typography 
-              component="span" 
-              sx={{ 
-                color: '#DDAC17', 
-                fontWeight: 'bold',
-                fontSize: '1.2rem'
-              }}
-            >
-              ₹5,000
-            </Typography>
+     <p>
+  You are eligible for a reward loan of{" "}
+  <span style={{ color: "gold", fontWeight: "bold" }}>₹5000</span>!
+</p>
+
           </DialogContentText>
           
           <DialogContentText 
@@ -257,7 +264,7 @@ const UserDashboard = () => {
               fontSize: '0.9rem'
             }}
           >
-            This reward has been credited to your account. You can use this amount for your future investments or withdraw it to your bank account.
+            Submit your loan request and our admin team will review and approve the appropriate amount based on your eligibility.
           </DialogContentText>
         </DialogContent>
         
@@ -279,22 +286,21 @@ const UserDashboard = () => {
           >
             Cancel
           </Button>
-        <Button
-  onClick={handleConfirmClaim}
-  variant="contained"
-  autoFocus
-  disabled={isClaiming}
-  sx={{
-    textTransform: 'capitalize',
-    backgroundColor: '#DDAC17',
-    '&:hover': { backgroundColor: '#Ecc440' },
-    fontWeight: 'bold',
-    px: 4,
-  }}
->
-  {isClaiming ? 'Processing...' : 'Claim Now'}
-</Button>
-
+          <Button
+            onClick={handleConfirmClaim}
+            variant="contained"
+            autoFocus
+            disabled={isClaiming}
+            sx={{
+              textTransform: 'capitalize',
+              backgroundColor: '#DDAC17',
+              '&:hover': { backgroundColor: '#Ecc440' },
+              fontWeight: 'bold',
+              px: 4,
+            }}
+          >
+            {isClaiming ? 'Processing...' : 'Submit Request'}
+          </Button>
         </DialogActions>
       </Dialog>
 

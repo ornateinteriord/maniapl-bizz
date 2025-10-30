@@ -10,7 +10,6 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  TableSortLabel,
   TextField,
   InputAdornment,
   Card,
@@ -19,9 +18,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Grid,
-  Button,
-  Alert,
-  Snackbar,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -29,51 +26,42 @@ import {
 } from '@mui/icons-material';
 import { getPendingLoansColumns } from '../../../utils/DataTableColumnsProvider';
 import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
-import { useGetPendingRewardLoans, useUpdateRewardLoanStatus } from '../../../api/Admin';
-
-
-
+import { useGetRewardLoansByStatus, useUpdateRewardLoanStatus } from '../../../api/Admin';
+import { toast } from 'react-toastify';
 
 export default function PendingLoans() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [orderBy, setOrderBy] = useState('');
-  const [order, setOrder] = useState('asc');
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate, setToDate] = useState<string | null>(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   const { 
     data: pendingLoansData, 
-    error, 
+    isLoading, 
+    error,
     refetch 
-  } = useGetPendingRewardLoans();
-  console.log("pending loans adat:",pendingLoansData)
+  } = useGetRewardLoansByStatus("Processing");
+  console.log("processing loan:", pendingLoansData);
 
   const updateLoanMutation = useUpdateRewardLoanStatus();
 
-  const pendingLoans = pendingLoansData?.pendingLoans || [];
+  const pendingLoans = pendingLoansData?.loans || [];
   const totalCount = pendingLoansData?.totalCount || 0;
 
-  const handleProcessLoan = async (loanId: string) => {
+  const handleProcessLoan = async (memberId: string, action: 'approve' | 'reject') => {
     try {
       await updateLoanMutation.mutateAsync({ 
-        loanId, 
-        status: 'Approved' 
+        memberId, 
+        action 
       });
+      toast.success(`Loan ${action === 'approve' ? 'approved' : 'rejected'} successfully!`);
+      refetch();
     } catch (err) {
-      // Error handling is done in the mutation
+      console.error('Error processing loan:', err);
     }
   };
 
   const columns = getPendingLoansColumns(handleProcessLoan);
-
-  const handleSort = (property: string) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -84,68 +72,41 @@ export default function PendingLoans() {
     setPage(0);
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
-  };
-
-  // Filter data based on search term
-//   const filteredData = pendingLoans.filter(loan =>
-//     Object.values(loan).some(value => {
-//       if (typeof value === 'object' && value !== null) {
-//         return Object.values(value).some(nestedValue =>
-//           nestedValue?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-//         );
-//       }
-//       return value?.toString().toLowerCase().includes(searchTerm.toLowerCase());
-//     })
-//   );
-
-  // Sort data
-  const sortedData = [...pendingLoans].sort((a, b) => {
-    if (orderBy) {
-      const column = columns.find(col => col.name === orderBy);
-      if (column?.selector) {
-        const aValue = column.selector(a);
-        const bValue = column.selector(b);
-        
-        if (order === 'asc') {
-          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-        } else {
-          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-        }
-      }
-    }
-    return 0;
-  });
-
-  const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedData = pendingLoans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const renderCellContent = (row: any, column: any) => {
-    if (column.name === 'Status' && column.cell) {
+    if (column.cell) {
       return column.cell(row);
     }
-    if (column.name === 'Action' && column.selector) {
-      return column.selector(row);
+    
+    if (column.selector) {
+      const value = column.selector(row);
+      
+      if (column.name === 'Loan Amount') {
+        return `₹${(value || 0).toLocaleString()}`;
+      }
+      
+      return value || '-';
     }
-    if (column.name === 'Loan Amount') {
-      return `₹${row.loan_amount?.toLocaleString()}`;
-    }
-    return column.selector ? column.selector(row) : '-';
+    
+    return '-';
   };
 
-//   if (loading) {
-//     return (
-//       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-//         <CircularProgress />
-//       </Box>
-//     );
-//   }
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ margin: '2rem', mt: 12 }}>
-        Error loading pending loans: {error.message}
-      </Alert>
+      <Box sx={{ margin: '2rem', mt: 12 }}>
+        <Typography color="error">
+          Error loading pending loans
+        </Typography>
+      </Box>
     );
   }
 
@@ -155,19 +116,9 @@ export default function PendingLoans() {
         <Typography variant="h4">
           Pending Loans
         </Typography>
-        <Grid className="filter-actions" >
+        <Grid className="filter-actions" sx={{ display: 'flex', gap: 2, mt: 2 }}>
           <MuiDatePicker date={fromDate} setDate={setFromDate} label="From Date" />
           <MuiDatePicker date={toDate} setDate={setToDate} label="To Date" />
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: '#7e22ce',
-              '&:hover': { backgroundColor: '#7e22ce' }
-            }}
-            onClick={() => refetch()}
-          >
-            Refresh
-          </Button>
         </Grid>
       </Grid>
 
@@ -182,7 +133,9 @@ export default function PendingLoans() {
                 '& .MuiSvgIcon-root': { color: '#fff' }
               }}
             >
-              List of Pending Loans ({totalCount})
+              <Typography variant="h6">
+                List of Pending Loans ({totalCount})
+              </Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Box sx={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginBottom: '1rem' }}>
@@ -190,8 +143,6 @@ export default function PendingLoans() {
                   size="small"
                   placeholder="Search..."
                   sx={{ minWidth: 200 }}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -215,29 +166,14 @@ export default function PendingLoans() {
                             fontSize: '14px'
                           }}
                         >
-                          {column.sortable ? (
-                            <TableSortLabel
-                              active={orderBy === column.name}
-                              onClick={() => handleSort(column.name)}
-                              sx={{ 
-                                color: 'white !important',
-                                '& .MuiTableSortLabel-icon': {
-                                  color: 'white !important'
-                                }
-                              }}
-                            >
-                              {column.name}
-                            </TableSortLabel>
-                          ) : (
-                            column.name
-                          )}
+                          {column.name}
                         </TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {paginatedData.length > 0 ? (
-                      paginatedData.map((row) => (
+                      paginatedData.map((row:any) => (
                         <TableRow 
                           key={row._id}
                           sx={{ 
@@ -266,7 +202,7 @@ export default function PendingLoans() {
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
-                count={sortedData.length}
+                count={pendingLoans.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={handleChangePage}
@@ -276,13 +212,6 @@ export default function PendingLoans() {
           </Accordion>
         </CardContent>
       </Card>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        message={snackbar.message}
-      />
     </>
   );
 }

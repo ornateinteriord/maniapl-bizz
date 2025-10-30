@@ -6,11 +6,10 @@ import DashboardCard from '../../../components/common/DashboardCard';
 import { getAdminDashboardTableColumns } from '../../../utils/DataTableColumnsProvider';
 import PersonIcon from '@mui/icons-material/Person';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import FavoriteIcon from '@mui/icons-material/Favorite';
 import EventIcon from '@mui/icons-material/Event';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import SchoolIcon from '@mui/icons-material/School';
 import { useGetAllMembersDetails } from '../../../api/Admin';
-
 
 const AdminDashboard = () => { 
   const { data: members = [], isLoading, error } = useGetAllMembersDetails();
@@ -21,10 +20,19 @@ const AdminDashboard = () => {
            new Date(a.createdAt || a.Date_of_joining).getTime();
   });
 
+  const totalMembers = members.length;
+  const activeMembers = members.filter((member: any) => 
+  member.status?.toLowerCase() === 'active'
+).length;
 
-const totalMembers = members.length;
-const activeMembers = members.filter((member: any) => member.status === 'active' || member.isActive).length;
-const pendingMembers = members.filter((member: any) => member.status === 'Pending' || !member.isActive).length;
+const pendingMembers = members.filter((member: any) => 
+  member.status?.toLowerCase() === 'pending'
+).length;
+
+  const totalCities = new Set(members.map((member: any) =>  member.location).filter(Boolean)).size;
+  const totalDegrees = new Set(members.map((member: any) => member.degree || member.education).filter(Boolean)).size;
+  const totalEvents = 0;
+  const totalLikes = 0; 
 
   if (isLoading) {
     return (
@@ -61,31 +69,31 @@ const pendingMembers = members.filter((member: any) => member.status === 'Pendin
 
           <div className="grid grid-cols-2 md:flex items-center gap-6 md:gap-12 text-white">
             <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">97.3k</div>
+              <div className="text-xl md:text-2xl font-bold mb-2">{totalLikes}k</div>
               <div className="text-xs md:text-sm flex items-center justify-center gap-1">
                 <ThumbUpIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
                 Great
               </div>
             </div>
             <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">197k</div>
+              <div className="text-xl md:text-2xl font-bold mb-2">{totalDegrees}</div>
               <div className="text-xs md:text-sm flex items-center justify-center gap-1">
-                <FavoriteIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
-                Likes
+                <SchoolIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
+                Degrees
               </div>
             </div>
             <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">211</div>
+              <div className="text-xl md:text-2xl font-bold mb-2">{totalEvents}</div>
               <div className="text-xs md:text-sm flex items-center justify-center gap-1">
                 <EventIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
                 Events
               </div>
             </div>
             <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">28°C</div>
+              <div className="text-xl md:text-2xl font-bold mb-2">{totalCities}</div>
               <div className="text-xs md:text-sm flex items-center justify-center gap-1">
                 <LocationOnIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
-                Bangalore
+                Cities
               </div>
             </div>
           </div>
@@ -151,4 +159,4 @@ const pendingMembers = members.filter((member: any) => member.status === 'Pendin
   )
 }
 
-export default AdminDashboard
+export default AdminDashboard;

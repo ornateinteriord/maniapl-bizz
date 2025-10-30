@@ -22,6 +22,7 @@ import {
   EventIcon,
   SmsIcon,
 } from "../Icons";
+import { CardMembershipRounded, Pending } from "@mui/icons-material";
 
 export const UserSideBarMenuItems: SideBarMenuItemType[] = [
   {
@@ -209,12 +210,12 @@ export const AdminSideBarMenuItems: SideBarMenuItemType[] = [
     { 
       name: "Loan Pending", 
       path: "/admin/member/pending", 
-      icon: <CreditCardIcon /> 
+      icon: <Pending/> 
     },
     { 
       name: " Loan Processed", 
       path: "/admin/member/processed", 
-      icon: <CreditCardIcon /> 
+      icon: <CardMembershipRounded /> 
     },
    
   ],

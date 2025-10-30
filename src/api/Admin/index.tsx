@@ -265,40 +265,33 @@ export const useGetAllDailyPayouts = () => {
 
 
 
-export const useGetPendingRewardLoans = () => {
+// Single unified hook for both pending and processed loans
+export const useGetRewardLoansByStatus = (status:any) => {
   return useQuery({
-    queryKey: ["pendingRewardLoans"],
+    queryKey: ["rewardLoans", status], // Include status in queryKey for proper caching
     queryFn: async () => {
-      const response = await get("/admin/reward-loans");
-      console.log('Pending Loans Response:', response);
+      const response = await get(`/admin/reward-loans/${status}`);
+      console.log('Reward Loans Response:', response);
       if (response.success) {
-        return response?.data || { pendingLoans: [],totalCount: 0};
+        return response?.data || { loans: [], totalCount: 0 };
       } else {
-        throw new Error(response.message || "Failed to fetch pending reward loans");
+        throw new Error(response.message || "Failed to fetch reward loans");
       }
     },
+    enabled: !!status, // Only run query if status is provided
   });
 };
 
 export const useUpdateRewardLoanStatus = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async ({ loanId, status }: { loanId: string; status: string }) => {
-      return await put(`/admin/reward-loans/${loanId}`, { status });
-    },
-    onSuccess: (response) => {
-      if (response.success) {
-        toast.success(response.message);
-        queryClient.invalidateQueries({ queryKey: ["pendingRewardLoans"] });
-      } else {
-        toast.error(response.message);
-      }
-    },
-    onError: (err: any) => {
-      const errorMessage =
-        err.response?.data?.message || "An unknown error occurred while updating loan status";
-      toast.error(errorMessage);
+    mutationFn: async (data: { 
+      memberId: string; 
+      action: 'approve' | 'reject';
+    }) => {
+      const response = await put(`/admin/reward-loans/${data.memberId}/${data.action}`);
+      
+      // If put already returns parsed data, just return it directly
+      return response;
     },
   });
 };
