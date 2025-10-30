@@ -64,20 +64,24 @@ export const useUpdateMember = () => {
     },
   });
 };
-
-export const useGetTransactionDetails = () => {
+// In your api/Memeber.js - Create a new hook
+export const useGetTransactionDetails = (status = "all") => {
   return useQuery({
-    queryKey: ["transactionDetails"],
+    queryKey: ["transactionsWithConfig", status],
     queryFn: async () => {
-      const response = await get(`/user/transactions`);
+      const response = await get(`/user/transactions?status=${status}`);
+      
       if (response.success) {
-        return response.data;
+        return response; // Return full response
       } else {
         throw new Error(response.message || "Failed to fetch transactions");
       }
     },
   });
 };
+
+
+
 
 export const useGetTicketDetails = (userId:string) => {
   return useQuery({
@@ -191,7 +195,6 @@ export const useCheckSponsorReward = (memberId: any) => {
     queryFn: async () => {
       if (!memberId) return Promise.resolve({}); 
       const response = await get(`/user/check-sponsor-reward/${memberId}`);
-      console.log("sponser reard:",response)
       return response; 
     },
     enabled: !!memberId,

@@ -13,13 +13,12 @@ import {
   DASHBOARD_CUTSOM_STYLE,
   getTransactionColumns,
 } from "../../../utils/DataTableColumnsProvider";
-import { useGetTransactionDetails } from "../../../api/Memeber";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
 import useSearch from "../../../hooks/SearchQuery";
+import { useGetTransactionDetails } from "../../../api/Memeber";
 
-
-const Transaction = () => {
+const LoanTransaction = () => {
   const {
     data: transactions,
     isLoading,
@@ -30,17 +29,29 @@ const Transaction = () => {
   useEffect(() => {
     if (isError) {
       const err = error as any;
-
       toast.error(
-        err?.response.data.message || "Failed to fetch Transaction details"
+        err?.response.data.message || "Failed to fetch Loan transactions"
       );
     }
   }, [isError, error]);
- 
-    const { searchQuery, setSearchQuery, filteredData } = useSearch(transactions)
+
+  // Filter only loan-related transactions
+  const loanTransactions = transactions?.filter((tx:any) => {
+    const transactionType = tx.transaction_type?.toLowerCase() || '';
+    const description = tx.description?.toLowerCase() || '';
+    
+    return (
+      transactionType.includes('loan') ||
+      description.includes('loan') ||
+      transactionType.includes('repayment') ||
+      description.includes('repayment')
+    );
+  }) || [];
+
+  const { searchQuery, setSearchQuery, filteredData } = useSearch(loanTransactions);
 
   const noDataComponent = (
-    <div style={{ padding: "24px" }}>No data available in table</div>
+    <div style={{ padding: "24px" }}>No loan transactions available</div>
   );
 
   return (
@@ -55,7 +66,7 @@ const Transaction = () => {
               "& .MuiSvgIcon-root": { color: "#fff" },
             }}
           >
-            List of Transaction
+            Loan Transactions
           </AccordionSummary>
           <AccordionDetails>
             <DataTable
@@ -73,16 +84,12 @@ const Transaction = () => {
               noDataComponent={noDataComponent}
               subHeader
               subHeaderComponent={
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    width: "100%",
-                    padding: "0.5rem",
-                  }}
-                >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0.5rem' }}>
+                  <div style={{ color: '#666', fontSize: '0.9rem' }}>
+                    Showing {filteredData.length} loan transactions
+                  </div>
                   <TextField
-                    placeholder="Search"
+                    placeholder="Search loan transactions..."
                     variant="outlined"
                     size="small"
                     value={searchQuery}
@@ -98,4 +105,4 @@ const Transaction = () => {
   );
 };
 
-export default Transaction;
+export default LoanTransaction;
