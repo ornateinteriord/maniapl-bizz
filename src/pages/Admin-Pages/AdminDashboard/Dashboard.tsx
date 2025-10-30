@@ -29,11 +29,10 @@ const pendingMembers = members.filter((member: any) =>
   member.status?.toLowerCase() === 'pending'
 ).length;
 
-  // Calculate statistics for the stats cards
   const totalCities = new Set(members.map((member: any) =>  member.location).filter(Boolean)).size;
   const totalDegrees = new Set(members.map((member: any) => member.degree || member.education).filter(Boolean)).size;
-  const totalEvents = 0; // You can calculate this from your events data
-  const totalLikes = 0; // You can calculate this from your engagement data
+  const totalEvents = 0;
+  const totalLikes = 0; 
 
   if (isLoading) {
     return (
