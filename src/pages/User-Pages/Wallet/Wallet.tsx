@@ -14,7 +14,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Snackbar,
   CircularProgress,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -32,8 +31,9 @@ const Wallet = () => {
   const [amount, setAmount] = useState("");
   const [deduction, setDeduction] = useState(0);
   const [netAmount, setNetAmount] = useState(0);
-  const [alert, setAlert] = useState({ open: false, message: "", severity: "success" });
   const [optimisticBalance, setOptimisticBalance] = useState<number | null>(null);
+  const [isWithdrawalAllowed, setIsWithdrawalAllowed] = useState<boolean>(true);
+  // const [ setLoanStatusMessage] = useState<string>("");
 
   const memberId = TokenService.getMemberId();
 
@@ -42,8 +42,6 @@ const Wallet = () => {
     isLoading,
     refetch,
   } = useGetWalletOverview(memberId);
-  
-  console.log("Wallet Data:", walletData); // Debug log
 
   const withdrawMutation = useWalletWithdraw(memberId);
 
@@ -52,7 +50,13 @@ const Wallet = () => {
       const balance = parseFloat(walletData.data.balance);
       setOptimisticBalance(balance);
     }
-  }, [walletData?.data?.balance]);
+
+    // Check withdrawal allowance from API response
+    if (walletData?.loanStatus) {
+      setIsWithdrawalAllowed(walletData.loanStatus.isWithdrawalAllowed);
+      // setLoanStatusMessage(walletData.loanStatus.message || "");
+    }
+  }, [walletData?.data?.balance, walletData?.loanStatus]);
 
   const handleAmountChange = (e: any) => {
     const selectedAmount = e.target.value;
@@ -73,20 +77,10 @@ const Wallet = () => {
 
   const handleWithdraw = () => {
     if (!amount || amount === "0") {
-      setAlert({
-        open: true,
-        message: "Please select withdrawal amount",
-        severity: "warning",
-      });
       return;
     }
 
     if (!memberId) {
-      setAlert({
-        open: true,
-        message: "Member ID not found",
-        severity: "error",
-      });
       return;
     }
 
@@ -94,75 +88,38 @@ const Wallet = () => {
     const currentBalance = optimisticBalance !== null ? optimisticBalance : parseFloat(walletData?.balance || 0);
     
     if (withdrawalAmount > currentBalance) {
-      setAlert({
-        open: true,
-        message: `Insufficient balance. Available: ₹${currentBalance.toFixed(2)}`,
-        severity: "error",
-      });
       return;
     }
 
     if (withdrawalAmount < 500) {
-      setAlert({
-        open: true,
-        message: "Minimum withdrawal amount is ₹500",
-        severity: "warning",
-      });
       return;
     }
 
     if (withdrawalAmount > 1000) {
-      setAlert({
-        open: true,
-        message: "Maximum withdrawal amount is ₹1000",
-        severity: "warning",
-      });
       return;
     }
 
-    // Optimistic UI update
     const newBalance = currentBalance - withdrawalAmount;
     setOptimisticBalance(newBalance);
 
     withdrawMutation.mutate(
       { memberId: memberId, amount: amount },
       {
-        onSuccess: (data) => {
+        onSuccess: () => {
           setAmount("");
           setDeduction(0);
           setNetAmount(0);
           refetch();
-
-          setAlert({
-            open: true,
-            message: data?.message || "Withdrawal completed successfully!",
-            severity: "success",
-          });
         },
-        onError: (error) => {
+        onError: () => {
           // Revert optimistic update on error
           setOptimisticBalance(parseFloat(walletData?.balance || 0));
-          setAlert({
-            open: true,
-            message: error.message || "Withdrawal failed",
-            severity: "error",
-          });
         }
       }
     );
   };
 
-  const handleCloseAlert = () => {
-    setAlert({ ...alert, open: false });
-  };
-
-  // Use optimistic balance if available, otherwise use server balance
-  // Ensure balance is never negative (backend should handle this, but frontend safety)
   const displayBalance = Math.max(0, optimisticBalance !== null ? optimisticBalance : parseFloat(walletData?.balance || 0));
-
-  // Debug: Check what's actually in the data
-  console.log("Total Withdrawal from API:", walletData?.totalWithdrawal);
-  console.log("Total Withdrawal type:", typeof walletData?.totalWithdrawal);
 
   if (isLoading) {
     return (
@@ -192,15 +149,6 @@ const Wallet = () => {
       }}
     >
       <CardContent sx={{ padding: isMobile ? "12px" : "24px" }}>
-        <Snackbar
-          open={alert.open}
-          autoHideDuration={5000}
-          onClose={handleCloseAlert}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-
-        </Snackbar>
-        
         <Accordion
           defaultExpanded
           sx={{
@@ -219,8 +167,9 @@ const Wallet = () => {
                     backgroundColor: "#f5f5f5",
                     borderRadius: 2,
                     textAlign: "center",
-                    border: "2px solid #7e22ce",
+                    border: `2px solid ${isWithdrawalAllowed ? "#7e22ce" : "#ff9800"}`,
                     position: "relative",
+                    opacity: isWithdrawalAllowed ? 1 : 0.7,
                   }}
                 >
                   {withdrawMutation.isPending && (
@@ -239,17 +188,27 @@ const Wallet = () => {
                   </Typography>
                   <Typography
                     variant="h4"
-                    sx={{ color: "#7e22ce", mt: 1, fontWeight: "bold" }}
+                    sx={{ 
+                      color: isWithdrawalAllowed ? "#7e22ce" : "#ff9800", 
+                      mt: 1, 
+                      fontWeight: "bold" 
+                    }}
                   >
                     ₹{displayBalance.toFixed(2)}
                   </Typography>
-                  {/* <Typography
-                    variant="caption"
-                    color="textSecondary"
-                    sx={{ mt: 1, display: "block" }}
-                  >
-                    {walletData?.calculation?.formula || "Total Income - Total Expenses"}
-                  </Typography> */}
+                  {!isWithdrawalAllowed && (
+                    <Typography
+                      variant="caption"
+                      sx={{ 
+                        color: "#ff9800", 
+                        mt: 1, 
+                        display: "block",
+                        fontWeight: "bold"
+                      }}
+                    >
+                      Withdrawal Disabled
+                    </Typography>
+                  )}
                   {withdrawMutation.isPending && (
                     <Typography
                       variant="caption"
@@ -268,6 +227,7 @@ const Wallet = () => {
                     backgroundColor: "#f5f5f5",
                     borderRadius: 2,
                     textAlign: "center",
+                    opacity: isWithdrawalAllowed ? 1 : 0.7,
                   }}
                 >
                   <Typography variant="subtitle1" color="textSecondary">
@@ -289,6 +249,7 @@ const Wallet = () => {
                     backgroundColor: "#f5f5f5",
                     borderRadius: 2,
                     textAlign: "center",
+                    opacity: isWithdrawalAllowed ? 1 : 0.7,
                   }}
                 >
                   <Typography variant="subtitle1" color="textSecondary">
@@ -298,7 +259,6 @@ const Wallet = () => {
                     variant="h4"
                     sx={{ color: "#7e22ce", mt: 1, fontWeight: "bold" }}
                   >
-                    {/* Fixed: Direct access to totalWithdrawal */}
                     {walletData?.totalWithdrawal ? `₹${walletData?.totalWithdrawal}` : "₹0.00"}
                   </Typography>
                 </Box>
@@ -321,13 +281,13 @@ const Wallet = () => {
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
-              backgroundColor: "#7e22ce",
+              backgroundColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800",
               color: "#fff",
               "& .MuiSvgIcon-root": { color: "#fff" },
               minHeight: isMobile ? "48px" : "64px",
             }}
           >
-            Withdrawal Request
+            Withdrawal Request {!isWithdrawalAllowed && "(Temporarily Disabled)"}
           </AccordionSummary>
           <AccordionDetails>
             <form
@@ -346,8 +306,8 @@ const Wallet = () => {
                 InputProps={{ readOnly: true }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    "&:hover fieldset": { borderColor: "#7e22ce" },
-                    "&.Mui-focused fieldset": { borderColor: "#7e22ce" },
+                    "&:hover fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
+                    "&.Mui-focused fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
                   },
                 }}
               />
@@ -358,7 +318,12 @@ const Wallet = () => {
                   value={amount}
                   onChange={handleAmountChange}
                   label="Withdrawal Amount"
-                  disabled={withdrawMutation.isPending}
+                  disabled={withdrawMutation.isPending || !isWithdrawalAllowed}
+                  sx={{
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: isWithdrawalAllowed ? "inherit" : "#ff9800",
+                    },
+                  }}
                 >
                   <MenuItem value="0">
                     <em>Select Amount</em>
@@ -367,9 +332,11 @@ const Wallet = () => {
                     <MenuItem 
                       key={value} 
                       value={value}
-                      disabled={value > displayBalance}
+                      disabled={value > displayBalance || !isWithdrawalAllowed}
                     >
-                      ₹{value} {value > displayBalance ? "(Insufficient Balance)" : ""}
+                      ₹{value} 
+                      {value > displayBalance ? " (Insufficient Balance)" : ""}
+                      {!isWithdrawalAllowed ? " (Withdrawal Disabled)" : ""}
                     </MenuItem>
                   ))}
                 </Select>
@@ -383,8 +350,8 @@ const Wallet = () => {
                 InputProps={{ readOnly: true }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    "&:hover fieldset": { borderColor: "#7e22ce" },
-                    "&.Mui-focused fieldset": { borderColor: "#7e22ce" },
+                    "&:hover fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
+                    "&.Mui-focused fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
                   },
                 }}
               />
@@ -397,8 +364,8 @@ const Wallet = () => {
                 InputProps={{ readOnly: true }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    "&:hover fieldset": { borderColor: "#7e22ce" },
-                    "&.Mui-focused fieldset": { borderColor: "#7e22ce" },
+                    "&:hover fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
+                    "&.Mui-focused fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
                   },
                 }}
               />
@@ -416,7 +383,7 @@ const Wallet = () => {
                   <Typography variant="body2" sx={{ mb: 1 }}>
                     <strong>Terms & Conditions:</strong>
                   </Typography>
-                  <Box sx={{ display: "flex", gap: 4 }}>
+                  <Box sx={{ display: "flex", gap: 4, flexDirection: isMobile ? "column" : "row" }}>
                     <Box>
                       <Typography variant="body2">• 15% deduction applied</Typography>
                       <Typography variant="body2">• Minimum withdrawal: ₹500</Typography>
@@ -426,6 +393,18 @@ const Wallet = () => {
                       <Typography variant="body2">• One withdrawal per day allowed</Typography>
                     </Box>
                   </Box>
+                  {!isWithdrawalAllowed && (
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: "#ff9800", 
+                        fontWeight: "bold", 
+                        mt: 1 
+                      }}
+                    >
+                      • Withdrawal disabled due to unpaid loan from last Saturday
+                    </Typography>
+                  )}
                 </Box>
 
                 <Button
@@ -435,19 +414,22 @@ const Wallet = () => {
                     withdrawMutation.isPending || 
                     !amount || 
                     amount === "0" || 
-                    parseFloat(amount) > displayBalance
+                    parseFloat(amount) > displayBalance ||
+                    !isWithdrawalAllowed
                   }
                   sx={{
-                    backgroundColor: "#7e22ce",
+                    backgroundColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800",
                     minWidth: "120px",
-                    "&:hover": { backgroundColor: "#581c87" },
+                    "&:hover": { 
+                      backgroundColor: isWithdrawalAllowed ? "#581c87" : "#f57c00" 
+                    },
                     "&:disabled": { backgroundColor: "#cccccc" },
                   }}
                 >
                   {withdrawMutation.isPending ? (
                     <CircularProgress size={24} sx={{ color: "white" }} />
                   ) : (
-                    "Withdraw"
+                    isWithdrawalAllowed ? "Withdraw" : "Disabled"
                   )}
                 </Button>
               </Box>

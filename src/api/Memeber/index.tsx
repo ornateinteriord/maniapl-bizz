@@ -404,7 +404,7 @@ export const useClimeLoan = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success(data?.message || "Reward loan claimed successfully!");
+      toast.success(data?.message);
     },
     onError: (error: any) => {
       const errorMsg =
@@ -413,6 +413,31 @@ export const useClimeLoan = () => {
         "Failed to claim reward loan.";
       toast.error(errorMsg);
       console.error("Error in useClimeLoan:", error);
+    },
+  });
+};
+
+
+export const useRepayLoan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ memberId, amount }: { memberId: any | number; amount: any }) => {
+      const response = await post(`/user/repayment-loan/${memberId}`, { amount });
+      return response;
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        // Refresh transactions data
+        queryClient.invalidateQueries({ queryKey: ["transactionDetails"] });
+        toast.success(response.message || "Loan repayment processed successfully!");
+      } else {
+        throw new Error(response.message || "Repayment failed");
+      }
+    },
+    onError: (error) => {
+      const errorMessage = error.message || "Failed to process loan repayment";
+      toast.error(errorMessage);
     },
   });
 };
