@@ -34,9 +34,9 @@ const Payout = () => {
   const renderContent = () => {
     switch (value) {
       case 0:
-        return <Requests tabTitle={"Requests"} />;
+        return <Requests tabTitle={"Withdrawal Requests"} />;
       case 1:
-        return <Proccessed tabTitle={"Proccessed"} />;
+        return <Proccessed tabTitle={"Processed Withdrawals"} />;
     }
   };
 
@@ -55,8 +55,8 @@ const Payout = () => {
               scrollButtons="auto"
               className="tabs"
             >
-              <Tab className="tab-list-1" label="Requests" />
-              <Tab className="tab-list-2" label="Proccessed" />
+              <Tab className="tab-list-1" label="Withdrawal Requests" />
+              <Tab className="tab-list-2" label="Processed Withdrawals" />
             </Tabs>
             <Box className="tab-content">{renderContent()}</Box>
           </Box>
@@ -93,7 +93,7 @@ const PayoutTable = ({ data, columns, tabTitle, loading }: PayoutTableProps) => 
         >
           <TextField
             size="small"
-            placeholder="Search..."
+            placeholder="Search withdrawals..."
             sx={{ minWidth: 200 }}
           />
         </Box>
@@ -106,7 +106,7 @@ const PayoutTable = ({ data, columns, tabTitle, loading }: PayoutTableProps) => 
           progressPending={loading}
           paginationRowsPerPageOptions={[25, 50, 100]}
           highlightOnHover
-          noDataComponent={<div>No data available</div>}
+          noDataComponent={<div>No withdrawal data available</div>}
         />
       </AccordionDetails>
     </Accordion>
@@ -117,9 +117,21 @@ export const Requests = ({ tabTitle }: { tabTitle: any }) => {
   const { data: pending = [], isFetching } = useGetPendingWithdrawals();
   const { mutate: approveTransaction, isPending } = useApproveWithdrawal();
 
+  // Filter only withdrawal requests
+  const withdrawalRequests = pending?.filter((transaction: any) => {
+    const transactionType = String(transaction.transaction_type || '').toLowerCase();
+    const description = String(transaction.description || '').toLowerCase();
+    
+    return (
+      transactionType.includes('withdrawal') ||
+      description.includes('withdrawal request') ||
+      description.includes('withdrawal')
+    );
+  }) || [];
+
   return (
     <PayoutTable
-      data={pending?.length > 0 ? pending : []}
+      data={withdrawalRequests}
       columns={getRequestColumns(approveTransaction)}
       tabTitle={tabTitle}
       loading={isFetching || isPending}
@@ -130,24 +142,30 @@ export const Requests = ({ tabTitle }: { tabTitle: any }) => {
 export const Proccessed = ({ tabTitle }: { tabTitle: any }) => {
   const { data: Approved, isFetching } = useGetApprovedWithdrawals();
 
+  // Filter only processed withdrawals (excluding level/direct benefits)
   const filteredData = Approved?.filter((transaction: any) => {
     const description = String(transaction.description || '').toLowerCase();
     const transactionType = String(transaction.transaction_type || '').toLowerCase();
     
+    // Check if it's a withdrawal transaction
+    const isWithdrawal = (
+      transactionType.includes('withdrawal') ||
+      description.includes('withdrawal request') ||
+      description.includes('withdrawal')
+    );
 
+    // Exclude level and direct benefits
     const isLevelBenefits = description.includes('level benefit') || 
                            description.includes('level benefits') ||
                            transactionType.includes('level benefit') ||
                            transactionType.includes('level benefits');
-
 
     const isDirectBenefits = description.includes('direct benefit') || 
                             description.includes('direct benefits') ||
                             transactionType.includes('direct benefit') ||
                             transactionType.includes('direct benefits');
 
-
-    return !isLevelBenefits && !isDirectBenefits;
+    return isWithdrawal && !isLevelBenefits && !isDirectBenefits;
   }) || [];
 
   return (

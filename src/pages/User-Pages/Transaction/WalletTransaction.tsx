@@ -7,52 +7,97 @@ import {
   AccordionDetails,
   TextField,
   CircularProgress,
+  Box,
+  Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   DASHBOARD_CUTSOM_STYLE,
   getTransactionColumns,
 } from "../../../utils/DataTableColumnsProvider";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import useSearch from "../../../hooks/SearchQuery";
 import { useGetTransactionDetails } from "../../../api/Memeber";
 
 const WalletTransaction = () => {
   const {
-    data: transactions,
+    data: transactionsResponse,
     isLoading,
     isError,
     error,
   } = useGetTransactionDetails();
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredData, setFilteredData] = useState<any[]>([]);
+
   useEffect(() => {
     if (isError) {
       const err = error as any;
       toast.error(
-        err?.response.data.message || "Failed to fetch Wallet transactions"
+        err?.response?.data?.message || "Failed to fetch Wallet transactions"
       );
     }
   }, [isError, error]);
 
-  // Filter out loan-related transactions - show everything EXCEPT loans
-  const nonLoanTransactions = transactions?.filter((tx: any) => {
-    const transactionType = tx.transaction_type?.toLowerCase() || '';
-    const description = tx.description?.toLowerCase() || '';
+  // Safely extract and filter transactions
+  useEffect(() => {
+    // Extract transactions from the response object
+    const transactions = transactionsResponse?.data || [];
     
-    return !(
-      transactionType.includes('loan') ||
-      description.includes('loan') ||
-      transactionType.includes('repayment') ||
-      description.includes('repayment')
-    );
-  }) || [];
+    console.log("Wallet Transactions Response:", transactionsResponse);
+    console.log("Extracted transactions:", transactions);
+    console.log("Is array?", Array.isArray(transactions));
 
-  const { searchQuery, setSearchQuery, filteredData } = useSearch(nonLoanTransactions);
+    if (Array.isArray(transactions)) {
+      // Filter out loan-related transactions - show everything EXCEPT loans
+      const nonLoanTransactions = transactions.filter((tx: any) => {
+        const transactionType = tx.transaction_type?.toLowerCase() || '';
+        const description = tx.description?.toLowerCase() || '';
+        const benefitType = tx.benefit_type?.toLowerCase() || '';
+        
+        return !(
+          transactionType.includes('loan') ||
+          description.includes('loan') ||
+          transactionType.includes('repayment') ||
+          description.includes('repayment') ||
+          benefitType.includes('loan')
+        );
+      });
+
+      console.log("Non-loan transactions:", nonLoanTransactions.length);
+
+      // Apply search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const searchedData = nonLoanTransactions.filter((tx: any) =>
+          Object.values(tx).some(value =>
+            value?.toString().toLowerCase().includes(query)
+          )
+        );
+        setFilteredData(searchedData);
+      } else {
+        setFilteredData(nonLoanTransactions);
+      }
+    } else {
+      setFilteredData([]);
+    }
+  }, [transactionsResponse, searchQuery]);
 
   const noDataComponent = (
-    <div style={{ padding: "24px" }}>No wallet transactions available</div>
+    <Box sx={{ padding: "24px", textAlign: "center" }}>
+      <Typography variant="h6" color="textSecondary">
+        No wallet transactions available
+      </Typography>
+    </Box>
   );
+
+  if (isLoading) {
+    return (
+      <Card sx={{ margin: "2rem", mt: 10, textAlign: "center", p: 3 }}>
+        <CircularProgress size={"4rem"} sx={{ color: "#7e22ce" }} />
+      </Card>
+    );
+  }
 
   return (
     <Card sx={{ margin: "2rem", mt: 10 }}>
@@ -77,23 +122,20 @@ const WalletTransaction = () => {
               paginationPerPage={25}
               paginationRowsPerPageOptions={[25, 50, 100]}
               highlightOnHover
-              progressPending={isLoading}
-              progressComponent={
-                <CircularProgress size={"4rem"} sx={{ color: "#7e22ce" }} />
-              }
+              progressPending={false}
               noDataComponent={noDataComponent}
               subHeader
               subHeaderComponent={
-                <div style={{ 
+                <Box sx={{ 
                   display: "flex", 
                   justifyContent: "space-between", 
                   alignItems: "center",
                   width: "100%", 
-                  padding: "0.5rem",
+                  p: 1,
                 }}>
-                  <div style={{ color: '#666', fontSize: '0.9rem' }}>
-                    Showing {filteredData?.length || 0} wallet transactions
-                  </div>
+                  <Typography variant="body2" color="textSecondary">
+                    Showing {filteredData.length} wallet transactions
+                  </Typography>
                   <TextField
                     placeholder="Search wallet transactions..."
                     variant="outlined"
@@ -102,7 +144,7 @@ const WalletTransaction = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     sx={{ width: '250px' }}
                   />
-                </div>
+                </Box>
               }
             />
           </AccordionDetails>
