@@ -16,7 +16,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress // Added missing import
+  CircularProgress 
 } from '@mui/material';
 import { cn } from '../../../lib/utils';
 import '../../Dashboard/dashboard.scss';
@@ -25,7 +25,15 @@ import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
 import DashboardCard from '../../../components/common/DashboardCard';
 import { getUserDashboardTableColumns } from '../../../utils/DataTableColumnsProvider';
 import TokenService from '../../../api/token/tokenService';
-import { useCheckSponsorReward, useGetWalletOverview, useGetSponsers,  useGetMemberDetails, useClimeLoan, useGetTransactionDetails } from '../../../api/Memeber';
+import { 
+  useCheckSponsorReward, 
+  useGetWalletOverview, 
+  useGetSponsers, 
+  useGetMemberDetails, 
+  useClimeLoan, 
+  useGetTransactionDetails,
+  useRepayLoan
+} from '../../../api/Memeber';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareIcon from '@mui/icons-material/Share';
 import { toast } from 'react-toastify';
@@ -35,7 +43,6 @@ const UserDashboard = () => {
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const [repaymentDialogOpen, setRepaymentDialogOpen] = useState(false);
   const [selectedRepayAmount, setSelectedRepayAmount] = useState(500);
-  const [isProcessing, setIsProcessing] = useState(false); // Added missing state
 
   const memberId = TokenService.getMemberId(); 
   
@@ -44,26 +51,33 @@ const UserDashboard = () => {
   const { data: sponsersData, isLoading: sponsersLoading } = useGetSponsers(memberId);
   const { data: memberDetails, isLoading: memberLoading } = useGetMemberDetails(memberId);
   const { mutate: climeLoan, isPending: isClaiming } = useClimeLoan();
+  const { mutate: repayLoanMutate, isPending: isRepaying } = useRepayLoan(); 
 
-  const { data: transactionsResponse, isLoading: loanStatusLoading } = useGetTransactionDetails("all");
+  const { data: transactionsResponse, isLoading: loanStatusLoading,refetch: refetchTransactions  } = useGetTransactionDetails("all");
 
   const allTransactions = transactionsResponse?.data || [];
   const repayConfig = transactionsResponse?.repayConfig;
 
   const approvedLoan = Array.isArray(allTransactions) 
-    ? allTransactions.find(transaction => 
+    ? allTransactions.find((transaction: any) => 
         transaction.status?.toLowerCase() === 'approved' && 
         (transaction.transaction_type?.includes('Loan') || transaction.benefit_type === 'loan')
       )
     : null;
 
   const isLoanApproved = !!approvedLoan;
-  const loanAmount = approvedLoan?.ew_credit || 0; 
-  const dueAmount = approvedLoan?.ew_debit || 0;
+    
+  // Use 'ew_credit' for loan amount
+  const initialLoanAmount = approvedLoan?.ew_credit ? parseFloat(approvedLoan.ew_credit) : 0; 
+    
+  // Calculate due amount properly - use net_amount if available, otherwise calculate
+  const dueAmount = approvedLoan?.net_amount ? parseFloat(approvedLoan.net_amount) : initialLoanAmount;
 
   const loading = walletLoading  || sponsersLoading  || memberLoading || loanStatusLoading;
   const isRepayEnabled = repayConfig?.isEnabled || false;
   const repayMessage = repayConfig?.message || "";
+
+  console.log("Saturday status:", isRepayEnabled);
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
@@ -91,6 +105,7 @@ const UserDashboard = () => {
       {
         onSuccess: () => {
           setClaimDialogOpen(false);
+          toast.success('Loan request submitted successfully!');
         },
         onError: (error: any) => {
           toast.error(error.message || "Failed to submit loan request");
@@ -99,7 +114,6 @@ const UserDashboard = () => {
     );
   };
 
-  // Added missing handleRepayment function
   const handleRepayment = () => {
     if (!memberId) {
       toast.error("Member ID not found!");
@@ -110,18 +124,24 @@ const UserDashboard = () => {
       toast.error("Please select a repayment amount");
       return;
     }
+    
+    // Safety check: prevent overpaying
+    if (selectedRepayAmount > dueAmount) {
+      toast.error(`Repayment amount ₹${selectedRepayAmount} exceeds the remaining due amount of ₹${dueAmount.toFixed(2)}.`);
+      return;
+    }
 
-    setIsProcessing(true);
-
-    // Simulate API call - replace with your actual repayment API
-    setTimeout(() => {
-      setIsProcessing(false);
-      setRepaymentDialogOpen(false);
-      toast.success(`₹${selectedRepayAmount} repayment submitted successfully!`);
-      
-      // Reset selected amount
-      setSelectedRepayAmount(500);
-    }, 2000);
+    // Repayment API call
+    repayLoanMutate(
+      { memberId, amount: selectedRepayAmount },
+      {
+        onSuccess: () => {
+          setRepaymentDialogOpen(false);
+          setSelectedRepayAmount(500);
+          refetchTransactions();
+        },
+      }
+    );
   };
 
   const handleCopyReferralLink = () => {
@@ -353,6 +373,7 @@ const UserDashboard = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Referral Link Box */}
       <Box 
         sx={{ 
           mx: { xs: 2, sm: 3, md: 4 },
@@ -491,6 +512,7 @@ const UserDashboard = () => {
         </Typography>
       </Box>
 
+      {/* Dashboard Cards Grid */}
       <Grid 
         container 
         spacing={{ xs: 2, sm: 3 }} 
@@ -520,10 +542,11 @@ const UserDashboard = () => {
         <Grid item xs={12} sm={6} md={4}>
           <DashboardCard amount={loading ? 0 : walletBalanceAmount} title="Wallet Balance" />
         </Grid>
-        {isLoanApproved && (
+        
+        {isLoanApproved &&  (
           <Grid item xs={12} sm={6} md={4}>
             <DashboardCard
-              amount={loanAmount}
+              amount={initialLoanAmount}
               dueAmount={dueAmount}
               title="Loan Amount"
               type="loan"
@@ -542,7 +565,7 @@ const UserDashboard = () => {
       {/* Repayment Dialog */}
       <Dialog
         open={repaymentDialogOpen}
-        onClose={() => !isProcessing && setRepaymentDialogOpen(false)}
+        onClose={() => !isRepaying && setRepaymentDialogOpen(false)}
         PaperProps={{
           sx: {
             borderRadius: 3,
@@ -553,44 +576,16 @@ const UserDashboard = () => {
           },
         }}
       >
-        <Box
-          sx={{
-            height: 4,
-            background: 'linear-gradient(90deg, #6b21a8 0%, #a855f7 100%)',
-            borderRadius: 2,
-            mb: 1,
-          }}
-        />
-
-        <DialogTitle
-          sx={{
+        <DialogTitle 
+          sx={{ 
             textAlign: 'center',
+            color: '#7e22ce',
             fontWeight: 'bold',
-            color: '#6b21a8',
-            fontSize: '1.4rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
+            fontSize: '1.5rem',
+            pb: 1
           }}
         >
-          <Box
-            component="span"
-            sx={{
-              background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
-              borderRadius: '50%',
-              width: 32,
-              height: 32,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '1rem',
-            }}
-          >
-            💰
-          </Box>
-          Repay Your Loan
+          Loan Repayment
         </DialogTitle>
 
         <DialogContent>
@@ -630,7 +625,7 @@ const UserDashboard = () => {
                 border: '1px solid #e2e8f0'
               }}>
                 <Typography sx={{ color: '#64748b' }}>Total Loan</Typography>
-                <Typography sx={{ fontWeight: 600 }}>₹{loanAmount}</Typography>
+                <Typography sx={{ fontWeight: 600 }}>₹{initialLoanAmount.toFixed(2)}</Typography>
               </Box>
               
               <Box sx={{ 
@@ -641,9 +636,9 @@ const UserDashboard = () => {
                 borderRadius: 2,
                 border: '1px solid #bbf7d0'
               }}>
-                <Typography sx={{ color: '#64748b' }}>Paid</Typography>
+                <Typography sx={{ color: '#64748b' }}>Amount Paid</Typography>
                 <Typography sx={{ fontWeight: 600, color: '#059669' }}>
-                  ₹{loanAmount - dueAmount}
+                  ₹{(initialLoanAmount - dueAmount).toFixed(2)}
                 </Typography>
               </Box>
               
@@ -657,7 +652,7 @@ const UserDashboard = () => {
               }}>
                 <Typography sx={{ color: '#64748b' }}>Due Amount</Typography>
                 <Typography sx={{ fontWeight: 700, color: '#dc2626' }}>
-                  ₹{dueAmount}
+                  ₹{dueAmount.toFixed(2)}
                 </Typography>
               </Box>
             </Box>
@@ -669,7 +664,7 @@ const UserDashboard = () => {
               value={selectedRepayAmount}
               label="Repayment Amount"
               onChange={(e) => setSelectedRepayAmount(Number(e.target.value))}
-              disabled={isProcessing}
+              disabled={isRepaying}
               sx={{
                 borderRadius: 2,
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -680,19 +675,21 @@ const UserDashboard = () => {
                 },
               }}
             >
-              {[500, 1000, 2000, dueAmount].filter(amount => amount <= dueAmount).map((amount) => (
-                <MenuItem 
-                  key={amount} 
-                  value={amount}
-                  sx={{ fontWeight: amount === dueAmount ? 600 : 400 }}
-                >
-                  ₹{amount} {amount === dueAmount && '(Full Payment)'}
-                </MenuItem>
-              ))}
+              {[500]
+                .filter(amount => amount <= dueAmount)
+                .map((amount) => (
+                  <MenuItem 
+                    key={amount} 
+                    value={amount}
+                    sx={{ fontWeight: amount === dueAmount ? 600 : 400 }}
+                  >
+                    ₹{amount} {amount === dueAmount && '(Full Payment)'}
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
 
-          {isProcessing && (
+          {isRepaying && (
             <Box sx={{ mt: 2, textAlign: 'center' }}>
               <CircularProgress size={20} sx={{ color: '#6b21a8' }} />
               <Typography variant="body2" sx={{ color: '#6b7280', mt: 1 }}>
@@ -711,7 +708,7 @@ const UserDashboard = () => {
           <Button
             onClick={() => setRepaymentDialogOpen(false)}
             variant="outlined"
-            disabled={isProcessing}
+            disabled={isRepaying}
             sx={{
               borderColor: '#d1d5db',
               color: '#6b7280',
@@ -730,7 +727,7 @@ const UserDashboard = () => {
           <Button
             onClick={handleRepayment}
             variant="contained"
-            disabled={isProcessing || selectedRepayAmount === 0}
+            disabled={isRepaying || selectedRepayAmount === 0}
             sx={{
               background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
               '&:hover': {
@@ -744,11 +741,12 @@ const UserDashboard = () => {
               boxShadow: 'none',
             }}
           >
-            {isProcessing ? 'Processing...' : `Pay ₹${selectedRepayAmount}`}
+            {isRepaying ? 'Processing...' : 'Pay now'}
           </Button>
         </DialogActions>
       </Dialog>
 
+      {/* Member Statistics */}
       <div className='mt-10 p-4 rounded shadow'>    
         <Card className='bg-gray-300'>
           <CardContent>

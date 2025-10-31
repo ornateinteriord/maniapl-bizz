@@ -1,4 +1,4 @@
-import { Button, IconButton } from "@mui/material";
+import { Box, Button, IconButton } from "@mui/material";
 import  VisibilityIcon  from '@mui/icons-material/Visibility';
 import {  Edit } from "lucide-react";
 import { getFormattedDate } from './common';
@@ -1147,10 +1147,14 @@ export const getProcessedLoansColumns = () => [
   },
 ];
 
-export const getLoansListColumns = (onRepay: (loanId: number) => void) => [
+export const getLoansListColumns = () => [
   {
     name: "Date",
-    selector: (row: any) => row.transaction_date || "-",
+    selector: (row: any) => {
+      if (!row.transaction_date) return "-";
+      const date = new Date(row.transaction_date);
+      return date.toLocaleDateString('en-IN');
+    },
     sortable: true,
   },
   {
@@ -1159,53 +1163,54 @@ export const getLoansListColumns = (onRepay: (loanId: number) => void) => [
     sortable: true,
   },
   {
+    name: "Name",
+    selector: (row: any) => row.Name || "-",
+    sortable: true,
+  },
+  {
     name: "Mobile No.",
-    selector: (row: any) => row.memberDetails?.mobileno || "-",
+    selector: (row: any) => row.mobileno || "-",
     sortable: true,
   },
   {
-    name: "Loan Amount",
-    selector: (row: any) => `₹${row.loan_amount?.toLocaleString()}` || "-",
+  name: "Loan Amount",
+  selector: (row: any) => `₹${(row.ew_credit || 5000).toLocaleString('en-IN')}`,
+  sortable: true,
+},
+  {
+    name: "Paid Amount",
+    selector: (row: any) => `₹${row.ew_debit?.toLocaleString('en-IN')}` || "-",
     sortable: true,
   },
   {
-    name: "Total Paid",
-    selector: (row: any) => `₹${row.total_paid?.toLocaleString()}` || "-",
+    name: "Due Amount",
+    selector: (row: any) => `₹${row.net_amount?.toLocaleString('en-IN')}` || "-",
     sortable: true,
   },
+  // {
+  //   name: "Transaction Type",
+  //   selector: (row: any) => row.transaction_type || row.benefit_type || "-",
+  //   sortable: true,
+  // },
   {
     name: "Status",
     selector: (row: any) => row.status || "-",
     sortable: true,
     cell: (row: any) => (
-      <span className={`status-badge ${row.status?.toLowerCase()}`}>
+      <Box
+        component="span"
+        sx={{
+          px: 1.5,
+          color:'#ffff',
+          py: 0.5,
+          borderRadius: 1,
+          fontSize: '0.75rem',
+          fontWeight: 'bold',
+          backgroundColor: 'green',
+        }}
+      >
         {row.status}
-      </span>
+      </Box>
     ),
   },
- {
-  name: "Action",
-  cell: (row: any) => (
-    <Button 
-      variant="contained"
-      size="small"
-      onClick={() => onRepay(row.id)}
-      sx={{
-        backgroundColor: '#7e22ce',
-        color: 'white',
-        '&:hover': {
-          backgroundColor: '#6b21a8',
-        },
-        textTransform: 'none',
-        fontWeight: 'bold',
-        fontSize: '0.875rem',
-        px: 2,
-        py: 0.5
-      }}
-    >
-      Repay
-    </Button>
-  ),
-},
 ];
-
