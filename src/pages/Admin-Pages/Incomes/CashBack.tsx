@@ -9,11 +9,24 @@ import { useState } from "react";
 const CashBack = () => {
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate, setToDate] = useState<string | null>(null);
-  const data = [
-    {}
-  ]
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Empty data array for demonstration
+  const data: any[] = [];
+  
   const noDataComponent = (
-    <div style={{ padding: "24px" }}>No data available in table</div>
+    <Box sx={{ 
+      padding: "40px", 
+      textAlign: "center",
+      color: "text.secondary"
+    }}>
+      <Typography variant="h6" gutterBottom>
+        No Data Found
+      </Typography>
+      <Typography variant="body2">
+        No daily benefits data available to display.
+      </Typography>
+    </Box>
   );
 
   return (
@@ -38,7 +51,7 @@ const CashBack = () => {
             variant="contained"
             sx={{
               backgroundColor: "#7e22ce",
-              "&:hover": { backgroundColor: "#7e22ce" },
+              "&:hover": { backgroundColor: "#6b21a8" },
             }}
           >
             Search
@@ -56,11 +69,11 @@ const CashBack = () => {
                 "& .MuiSvgIcon-root": { color: "#fff" },
               }}
             >
-              List of Daily benefits Payouts
+              List of Daily Benefits Payouts
             </AccordionSummary>
             <AccordionDetails>
               <Box
-                style={{
+                sx={{
                   display: "flex",
                   gap: "1rem",
                   justifyContent: "flex-end",
@@ -71,6 +84,8 @@ const CashBack = () => {
                   size="small"
                   placeholder="Search..."
                   sx={{ minWidth: 200 }}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </Box>
               <DataTable
@@ -82,6 +97,20 @@ const CashBack = () => {
                 paginationRowsPerPageOptions={[25, 50, 100]}
                 highlightOnHover
                 noDataComponent={noDataComponent}
+                subHeader
+                subHeaderComponent={
+                  <Box sx={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center",
+                    width: "100%",
+                    p: 1
+                  }}>
+                    <Typography variant="body2" color="textSecondary">
+                      {data.length === 0 ? "No records found" : `Showing ${data.length} records`}
+                    </Typography>
+                  </Box>
+                }
               />
             </AccordionDetails>
           </Accordion>
