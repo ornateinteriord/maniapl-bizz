@@ -1,4 +1,4 @@
-import { Box, Button, IconButton } from "@mui/material";
+import { Button, IconButton } from "@mui/material";
 import  VisibilityIcon  from '@mui/icons-material/Visibility';
 import {  Edit } from "lucide-react";
 import { getFormattedDate } from './common';
@@ -223,22 +223,9 @@ export const getTransactionColumns = () => [
     sortable: true,
   },
   {
-    name: "Net Amount",
+    name: "Due Amount",
     selector: (row: any) => row.net_amount ? `₹ ${parseFloat(row.net_amount).toLocaleString()}` : "-",
     sortable: true,
-  },
-  {
-    name: "TDS (15%)",
-    selector: (row: any) => row.deduction,
-    sortable: true,
-    cell: (row: any) => {
-      if (row.transaction_type === "Withdrawal" && parseFloat(row.ew_debit) > 0) {
-        const withdrawalAmount = parseFloat(row.ew_debit);
-        const tds = withdrawalAmount * 0.15;
-        return `₹ ${tds.toFixed(2)}`;
-      }
-      return "-";
-    }
   },
   {
     name: "Status",
@@ -1147,13 +1134,13 @@ export const getProcessedLoansColumns = () => [
   },
 ];
 
-export const getLoansListColumns = () => [
+export const getLoansListColumns = (onRepayClick: (row: any) => void) => [
   {
     name: "Date",
     selector: (row: any) => {
       if (!row.transaction_date) return "-";
       const date = new Date(row.transaction_date);
-      return date.toLocaleDateString('en-IN');
+      return date.toLocaleDateString("en-IN");
     },
     sortable: true,
   },
@@ -1173,44 +1160,34 @@ export const getLoansListColumns = () => [
     sortable: true,
   },
   {
-  name: "Loan Amount",
-  selector: (row: any) => `₹${(row.ew_credit || 5000).toLocaleString('en-IN')}`,
-  sortable: true,
-},
-  {
-    name: "Paid Amount",
-    selector: (row: any) => `₹${row.ew_debit?.toLocaleString('en-IN')}` || "-",
+    name: "Loan Amount",
+    selector: (row: any) =>
+      `₹${(row.ew_credit || 5000).toLocaleString("en-IN")}`,
     sortable: true,
   },
   {
     name: "Due Amount",
-    selector: (row: any) => `₹${row.net_amount?.toLocaleString('en-IN')}` || "-",
+    selector: (row: any) =>
+      `₹${row.net_amount?.toLocaleString("en-IN")}` || "-",
     sortable: true,
   },
-  // {
-  //   name: "Transaction Type",
-  //   selector: (row: any) => row.transaction_type || row.benefit_type || "-",
-  //   sortable: true,
-  // },
   {
-    name: "Status",
-    selector: (row: any) => row.status || "-",
-    sortable: true,
+    name: "Action",
     cell: (row: any) => (
-      <Box
-        component="span"
-        sx={{
-          px: 1.5,
-          color:'#ffff',
-          py: 0.5,
-          borderRadius: 1,
-          fontSize: '0.75rem',
-          fontWeight: 'bold',
-          backgroundColor: 'green',
+      <button
+        onClick={() => onRepayClick(row)}
+        style={{
+          background: "#7e22ce",
+          color: "white",
+          padding: "5px 12px",
+          border: "none",
+          borderRadius: "6px",
+          cursor: "pointer",
+          fontWeight: 600,
         }}
       >
-        {row.status}
-      </Box>
+        Repay
+      </button>
     ),
   },
 ];
