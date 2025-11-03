@@ -53,10 +53,11 @@ const UserDashboard = () => {
   const { mutate: climeLoan, isPending: isClaiming } = useClimeLoan();
   const { mutate: repayLoanMutate, isPending: isRepaying } = useRepayLoan(); 
 
-  const { data: transactionsResponse, isLoading: loanStatusLoading,refetch: refetchTransactions  } = useGetTransactionDetails("all");
+  const { data: transactionsResponse, isLoading: loanStatusLoading, refetch: refetchTransactions } = useGetTransactionDetails("all");
 
   const allTransactions = transactionsResponse?.data || [];
-  const repayConfig = transactionsResponse?.repayConfig;
+  const isRepayEnabled = transactionsResponse?.isRepayEnabled || false;
+  const alreadyRepaidToday = transactionsResponse?.alreadyRepaidToday || false;
 
   const approvedLoan = Array.isArray(allTransactions) 
     ? allTransactions.find((transaction: any) => 
@@ -67,17 +68,29 @@ const UserDashboard = () => {
 
   const isLoanApproved = !!approvedLoan;
     
-  // Use 'ew_credit' for loan amount
   const initialLoanAmount = approvedLoan?.ew_credit ? parseFloat(approvedLoan.ew_credit) : 0; 
-    
-  // Calculate due amount properly - use net_amount if available, otherwise calculate
   const dueAmount = approvedLoan?.net_amount ? parseFloat(approvedLoan.net_amount) : initialLoanAmount;
 
-  const loading = walletLoading  || sponsersLoading  || memberLoading || loanStatusLoading;
-  const isRepayEnabled = repayConfig?.isEnabled || false;
-  const repayMessage = repayConfig?.message || "";
+  // Find the first transaction with Processing or Approved status
+  const processingOrApprovedTransaction = Array.isArray(allTransactions) 
+    ? allTransactions.find((transaction: any) => 
+        transaction.status && 
+        (transaction.status.toLowerCase() === 'processing' || 
+         transaction.status.toLowerCase() === 'approved')
+      )
+    : null;
+  const getStatusButtonText = () => {
+    if (processingOrApprovedTransaction) {
+      return processingOrApprovedTransaction.status;
+    }
+    return null;
+  };
 
-  console.log("Saturday status:", isRepayEnabled);
+  const statusButtonText = getStatusButtonText();
+  const hasProcessingOrApprovedStatus = !!statusButtonText;
+
+  const loading = walletLoading  || sponsersLoading  || memberLoading || loanStatusLoading;
+
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
@@ -125,13 +138,11 @@ const UserDashboard = () => {
       return;
     }
     
-    // Safety check: prevent overpaying
     if (selectedRepayAmount > dueAmount) {
       toast.error(`Repayment amount ₹${selectedRepayAmount} exceeds the remaining due amount of ₹${dueAmount.toFixed(2)}.`);
       return;
     }
 
-    // Repayment API call
     repayLoanMutate(
       { memberId, amount: selectedRepayAmount },
       {
@@ -139,7 +150,11 @@ const UserDashboard = () => {
           setRepaymentDialogOpen(false);
           setSelectedRepayAmount(500);
           refetchTransactions();
+          // toast.success('Repayment successful!');
         },
+        onError: (error: any) => {
+          toast.error(error.message);
+        }
       }
     );
   };
@@ -229,6 +244,62 @@ const UserDashboard = () => {
     },
   ];
 
+  const handleRepayClick = () => {
+    if (isRepayEnabled) {
+      setRepaymentDialogOpen(true);
+    } else if (alreadyRepaidToday) {
+      toast.info('You have already made a repayment today. Only one repayment allowed per Saturday.');
+    } else {
+      toast.warning('Repayment is only available on Saturdays.');
+    }
+  };
+
+  // Get button style based on status
+  const getButtonStyle = (status: string, isDisabled: boolean = false) => {
+    const baseStyle = {
+      textTransform: 'capitalize' as const,
+      fontWeight: 'bold',
+      px: 4,
+      py: 1,
+    };
+
+    if (isDisabled) {
+      return {
+        ...baseStyle,
+        backgroundColor: '#90EE90', 
+        color: '#000000',
+        '&:hover': {
+          backgroundColor: '#90EE90', 
+        },
+        '&.Mui-disabled': {
+          backgroundColor: '#90EE90',
+          color: '#000000',
+        }
+      };
+    }
+
+    switch (status?.toLowerCase()) {
+      case 'processing':
+        return {
+          ...baseStyle,
+          backgroundColor: '#FFA500',
+          '&:hover': { backgroundColor: '#FF8C00' },
+        };
+      case 'approved':
+        return {
+          ...baseStyle,
+          backgroundColor: '#28a745',
+          '&:hover': { backgroundColor: '#218838' },
+        };
+      default:
+        return {
+          ...baseStyle,
+          backgroundColor: '#DDAC17',
+          '&:hover': { backgroundColor: '#Ecc440' },
+        };
+    }
+  };
+
   return (
     <>
       <div className="h-auto md:h-40 relative w-full overflow-hidden bg-[#6b21a8] flex flex-col items-center justify-center mt-10 py-6 md:py-0">
@@ -261,28 +332,32 @@ const UserDashboard = () => {
             </div>
           </div>
 
-          {sponsorRewardData?.isEligibleForReward && (
+          {/* Show status button when Processing or Approved, otherwise show Claim Reward if eligible */}
+          {hasProcessingOrApprovedStatus ? (
             <div className="flex justify-center mt-4">
               <Button
                 variant="contained"
-                color="success"
+                sx={getButtonStyle(statusButtonText, true)} // Pass true for disabled state
+                disabled // Disable the button since it's just showing status
+              >
+                {statusButtonText}
+              </Button>
+            </div>
+          ) : sponsorRewardData?.isEligibleForReward ? (
+            <div className="flex justify-center mt-4">
+              <Button
+                variant="contained"
                 onClick={handleClaimReward}
-                sx={{
-                  textTransform: 'capitalize',
-                  backgroundColor: '#DDAC17',
-                  '&:hover': { backgroundColor: '#Ecc440' },
-                  fontWeight: 'bold',
-                  px: 4,
-                  py: 1,
-                }}
+                sx={getButtonStyle('claim', false)} // Pass false for enabled state
               >
                 Claim Reward
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
+      {/* Rest of your component remains the same */}
       {/* Claim Reward Dialog */}
       <Dialog
         open={claimDialogOpen}
@@ -550,13 +625,9 @@ const UserDashboard = () => {
               dueAmount={dueAmount}
               title="Loan Amount"
               type="loan"
-              onRepay={() => {
-                if (isRepayEnabled) {
-                  setRepaymentDialogOpen(true);
-                } else {
-                  toast.warning(repayMessage || 'Repayment option is currently disabled.');
-                }
-              }}
+              onRepay={handleRepayClick}
+              isRepayEnabled={isRepayEnabled}
+              alreadyRepaidToday={alreadyRepaidToday}
             />
           </Grid>
         )}

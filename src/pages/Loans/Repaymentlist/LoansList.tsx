@@ -22,6 +22,17 @@ import {
   Button,
   CircularProgress,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  DialogContentText,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -30,61 +41,140 @@ import {
 
 import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
 import { getLoansListColumns } from '../../../utils/DataTableColumnsProvider';
-import { useGetTransactionDetails } from '../../../api/Memeber';
-import TokenService from '../../../api/token/tokenService';
+import { useGetAllTransactionDetails } from '../../../api/Admin';
+import { toast } from 'react-toastify';
+import { useRepayLoan } from '../../../api/Memeber';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`repayment-tabpanel-${index}`}
+      aria-labelledby={`repayment-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 2 }}>{children}</Box>}
+    </div>
+  );
+}
 
 export default function LoansList() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
   const [orderBy, setOrderBy] = useState('');
-  const [order, setOrder] = useState('asc');
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate, setToDate] = useState<string | null>(null);
+  const [repayDialogOpen, setRepayDialogOpen] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState<any>(null);
+  const [repayAmount, setRepayAmount] = useState<number>(500);
+  const [tabValue, setTabValue] = useState(0);
+  const [manualAmount, setManualAmount] = useState<string>('');
 
-  const memberId = TokenService.getMemberId();
-  
-  // Fetch transaction data
   const { 
     data: transactionsResponse, 
     isLoading, 
     error,
     refetch 
-  } = useGetTransactionDetails("all");
+  } = useGetAllTransactionDetails();
 
-  // Extract loan transactions from the response
-  const allTransactions = transactionsResponse?.data || [];
-  
-  // Filter only COMPLETED loan transactions and transform them for the table
+  const { mutate: repayLoan, isPending: isRepaying } = useRepayLoan();
+
+  const allTransactions = transactionsResponse || [];
   const loanTransactions = allTransactions
     .filter((transaction: any) => 
-      (transaction.transaction_type?.includes('Loan') || 
-       transaction.benefit_type === 'loan' ||
-       transaction.transaction_type?.toLowerCase().includes('loan')) &&
-      transaction.status === 'Completed'
+      (transaction.transaction_type?.toLowerCase().includes('loan') ||
+       transaction.benefit_type === 'loan') &&
+      transaction.status === 'Approved'
     )
     .map((transaction: any) => ({
       id: transaction.id || transaction.transaction_id,
       transaction_date: transaction.transaction_date || transaction.created_at,
-      member_id: transaction.member_id || memberId,
+      member_id: transaction.member_id,
       Name: transaction.Name || 'N/A',
       mobileno: transaction.mobileno || 'N/A',
       net_amount: parseFloat(transaction.net_amount) || 0,
       ew_debit: parseFloat(transaction.ew_debit) || 0,
       ew_credit: parseFloat(transaction.ew_credit) || 0,
-      status: transaction.status || 'Completed',
-      transaction_type: transaction.transaction_type,
-      benefit_type: transaction.benefit_type,
-      originalData: transaction // Keep original data for reference
+      status: transaction.status || 'Approved',
+      originalData: transaction
     }));
 
-  const handleSearch = () => {
-    // Refetch data with date filters if your API supports it
-    // Otherwise, just use client-side filtering
-    refetch();
+  const handleRepayClick = (row: any) => {
+    setSelectedLoan(row);
+    setRepayAmount(500);
+    setManualAmount('');
+    setTabValue(0);
+    setRepayDialogOpen(true);
   };
 
-  const columns = getLoansListColumns();
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  const handleManualAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setManualAmount(value);
+    }
+  };
+
+  const getFinalRepayAmount = (): number => {
+    if (tabValue === 0) {
+      return repayAmount;
+    } else {
+      return manualAmount ? parseFloat(manualAmount) : 0;
+    }
+  };
+
+  const handleRepayment = () => {
+    if (!selectedLoan) return;
+
+    const memberId = selectedLoan.member_id;
+    const finalAmount = getFinalRepayAmount();
+    const dueAmount = selectedLoan.net_amount;
+
+    if (finalAmount <= 0) {
+      toast.error('Please enter a valid repayment amount');
+      return;
+    }
+
+    if (finalAmount > dueAmount) {
+      toast.error(`Repayment exceeds due amount ₹${dueAmount}`);
+      return;
+    }
+
+    if (finalAmount < 500) {
+      toast.error('Minimum repayment amount is ₹500');
+      return;
+    }
+
+    repayLoan(
+      { memberId, amount: finalAmount },
+      {
+        onSuccess: () => {
+          setRepayDialogOpen(false);
+          setManualAmount('');
+          refetch();
+        },
+        onError: (err: any) => {
+          toast.error(err.message || 'Repayment failed');
+        },
+      }
+    );
+  };
+
+  const handleSearch = () => refetch();
+  const columns = getLoansListColumns(handleRepayClick);
 
   const handleSort = (property: string) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -92,44 +182,28 @@ export default function LoansList() {
     setOrderBy(property);
   };
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+  const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(e.target.value, 10));
     setPage(0);
   };
 
-  // Filter data based on search term
-  const filteredData = loanTransactions.filter((row:any) =>
-    Object.values(row).some(value =>
-      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  const filteredData = loanTransactions.filter((row: any) =>
+    Object.values(row).some(v => v?.toString().toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Sort data
   const sortedData = [...filteredData].sort((a, b) => {
     if (!orderBy) return 0;
-    
     const aValue = a[orderBy as keyof typeof a];
     const bValue = b[orderBy as keyof typeof b];
-    
-    if (order === 'asc') {
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    } else {
-      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-    }
+    return order === 'asc' ? (aValue < bValue ? -1 : aValue > bValue ? 1 : 0)
+                           : (aValue > bValue ? -1 : aValue < bValue ? 1 : 0);
   });
 
   const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const renderCellContent = (row: any, column: any) => {
-    if (column.name === 'Status' && column.cell) {
-      return column.cell(row);
-    }
-    return column.selector ? column.selector(row) : '-';
-  };
+  const renderCellContent = (row: any, column: any) =>
+    column.selector ? column.selector(row) : '-';
 
   if (error) {
     return (
@@ -141,24 +215,22 @@ export default function LoansList() {
 
   return (
     <>
-      <Grid className="filter-container" sx={{ margin: '2rem', mt: 12 }}>
+      <Grid sx={{ margin: '2rem', mt: 12 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Box>
-            <Typography variant="h4" fontWeight="bold">
-              Loans List
-            </Typography>
-          </Box>
+          <Typography variant="h4" fontWeight="bold">
+            Loans List
+          </Typography>
         </Box>
-        <Grid className="filter-actions" sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Grid sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <MuiDatePicker date={fromDate} setDate={setFromDate} label="From Date" />
           <MuiDatePicker date={toDate} setDate={setToDate} label="To Date" />
-         <Button
+          <Button
             variant="contained"
             onClick={handleSearch}
             sx={{
-              textTransform:"capitalize",
+              textTransform: 'capitalize',
               backgroundColor: '#7e22ce',
-              '&:hover': { backgroundColor: '#6b21a8' }
+              '&:hover': { backgroundColor: '#6b21a8' },
             }}
           >
             Search
@@ -174,10 +246,10 @@ export default function LoansList() {
               sx={{
                 backgroundColor: '#7e22ce',
                 color: '#fff',
-                '& .MuiSvgIcon-root': { color: '#fff' }
+                '& .MuiSvgIcon-root': { color: '#fff' },
               }}
             >
-              List of Completed Loan Transactions {isLoading && <CircularProgress size={16} sx={{ color: '#fff', ml: 2 }} />}
+              List of Approved Loan Transactions {isLoading && <CircularProgress size={16} sx={{ color: '#fff', ml: 2 }} />}
             </AccordionSummary>
             <AccordionDetails>
               {isLoading ? (
@@ -185,18 +257,15 @@ export default function LoansList() {
                   <CircularProgress />
                 </Box>
               ) : loanTransactions.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography variant="h6" color="textSecondary">
-                    No completed loan transactions found
-                  </Typography>
-                </Box>
+                <Typography textAlign="center" color="textSecondary" py={4}>
+                  No approved loan transactions found
+                </Typography>
               ) : (
                 <>
-                  <Box sx={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                     <TextField
                       size="small"
                       placeholder="Search loans..."
-                      sx={{ minWidth: 200 }}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       InputProps={{
@@ -209,34 +278,22 @@ export default function LoansList() {
                     />
                   </Box>
 
-                  <TableContainer component={Paper} elevation={1}>
+                  <TableContainer component={Paper}>
                     <Table>
                       <TableHead>
                         <TableRow sx={{ backgroundColor: '#7e22ce' }}>
-                          {columns.map((column) => (
-                            <TableCell 
-                              key={column.name}
-                              sx={{ 
-                                color: 'white',
-                                fontWeight: 'bold',
-                                fontSize: '14px'
-                              }}
-                            >
-                              {column.sortable ? (
+                          {columns.map((col) => (
+                            <TableCell key={col.name} sx={{ color: 'white', fontWeight: 'bold' }}>
+                              {col.sortable ? (
                                 <TableSortLabel
-                                  active={orderBy === column.name}
-                                  onClick={() => handleSort(column.name)}
-                                  sx={{ 
-                                    color: 'white !important',
-                                    '& .MuiTableSortLabel-icon': {
-                                      color: 'white !important'
-                                    }
-                                  }}
+                                  active={orderBy === col.name}
+                                  onClick={() => handleSort(col.name)}
+                                  sx={{ color: 'white !important' }}
                                 >
-                                  {column.name}
+                                  {col.name}
                                 </TableSortLabel>
                               ) : (
-                                column.name
+                                col.name
                               )}
                             </TableCell>
                           ))}
@@ -244,16 +301,10 @@ export default function LoansList() {
                       </TableHead>
                       <TableBody>
                         {paginatedData.map((row) => (
-                          <TableRow 
-                            key={row.id}
-                            sx={{ 
-                              '&:nth-of-type(odd)': { backgroundColor: 'action.hover' },
-                              '&:hover': { backgroundColor: 'action.selected' }
-                            }}
-                          >
-                            {columns.map((column) => (
-                              <TableCell key={`${row.id}-${column.name}`}>
-                                {renderCellContent(row, column)}
+                          <TableRow key={row.id}>
+                            {columns.map((col) => (
+                              <TableCell key={`${row.id}-${col.name}`}>
+                                {col.cell ? col.cell(row) : renderCellContent(row, col)}
                               </TableCell>
                             ))}
                           </TableRow>
@@ -277,6 +328,217 @@ export default function LoansList() {
           </Accordion>
         </CardContent>
       </Card>
+
+      {/* Enhanced Repay Dialog */}
+      <Dialog 
+        open={repayDialogOpen} 
+        onClose={() => !isRepaying && setRepayDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 2,
+            minWidth: { xs: '320px', sm: '450px' },
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
+            background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+          },
+        }}
+      >
+        <DialogTitle 
+          sx={{ 
+            textAlign: 'center',
+            color: '#7e22ce',
+            fontWeight: 'bold',
+            fontSize: '1.5rem',
+            pb: 1
+          }}
+        >
+          Loan Repayment
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText
+            sx={{
+              textAlign: 'center',
+              mb: 3,
+              fontSize: '1rem',
+              color: '#4b5563',
+              lineHeight: 1.6,
+            }}
+          >
+            Choose the repayment amount and confirm to proceed.
+          </DialogContentText>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="subtitle2" 
+              sx={{ 
+                color: '#6b7280', 
+                mb: 1.5,
+                fontSize: '0.85rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}
+            >
+              Loan Summary
+            </Typography>
+            
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                p: 1.5,
+                backgroundColor: '#f8fafc',
+                borderRadius: 2,
+                border: '1px solid #e2e8f0'
+              }}>
+                <Typography sx={{ color: '#64748b' }}>Member ID</Typography>
+                <Typography sx={{ fontWeight: 600 }}>{selectedLoan?.member_id}</Typography>
+              </Box>
+              
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                p: 1.5,
+                backgroundColor: '#f8fafc',
+                borderRadius: 2,
+                border: '1px solid #e2e8f0'
+              }}>
+                <Typography sx={{ color: '#64748b' }}>Due Amount</Typography>
+                <Typography sx={{ fontWeight: 700, color: '#dc2626' }}>
+                  ₹{selectedLoan?.net_amount?.toFixed(2)}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange}
+            centered
+            sx={{
+              mb: 2,
+              '& .MuiTab-root': {
+                textTransform: 'capitalize',
+                fontWeight: 600,
+                minWidth: 'auto',
+                px: 3,
+              }
+            }}
+          >
+            <Tab label="Quick Pay" disabled={isRepaying} />
+            <Tab label="Manual Pay" disabled={isRepaying} />
+          </Tabs>
+
+          <TabPanel value={tabValue} index={0}>
+            <FormControl fullWidth size="medium">
+              <InputLabel sx={{ fontWeight: 500 }}>Repayment Amount</InputLabel>
+              <Select
+                value={repayAmount}
+                label="Repayment Amount"
+                onChange={(e) => setRepayAmount(Number(e.target.value))}
+                disabled={isRepaying}
+                sx={{
+                  borderRadius: 2,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#6b21a8',
+                  },
+                }}
+              >
+                {[500, 1000, 2000, 5000]
+                  .filter(amount => amount <= (selectedLoan?.net_amount || 0))
+                  .map((amount) => (
+                    <MenuItem 
+                      key={amount} 
+                      value={amount}
+                      sx={{ fontWeight: amount === selectedLoan?.net_amount ? 600 : 400 }}
+                    >
+                      ₹{amount} {amount === selectedLoan?.net_amount && '(Full Payment)'}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={1}>
+            <TextField
+              fullWidth
+              label="Enter Amount"
+              value={manualAmount}
+              onChange={handleManualAmountChange}
+              disabled={isRepaying}
+              placeholder="Enter repayment amount"
+              InputProps={{
+                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+              }}
+              sx={{
+                borderRadius: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                }
+              }}
+              helperText="Minimum amount: ₹500"
+            />
+          </TabPanel>
+
+          {isRepaying && (
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <CircularProgress size={20} sx={{ color: '#6b21a8' }} />
+              <Typography variant="body2" sx={{ color: '#6b7280', mt: 1 }}>
+                Processing your payment...
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ 
+          justifyContent: 'center', 
+          pb: 2,
+          pt: 1,
+          gap: 1,
+        }}>
+          <Button
+            onClick={() => setRepayDialogOpen(false)}
+            variant="outlined"
+            disabled={isRepaying}
+            sx={{
+              borderColor: '#d1d5db',
+              color: '#6b7280',
+              fontWeight: 600,
+              textTransform: 'capitalize',
+              borderRadius: 2,
+              px: 3,
+              '&:hover': {
+                backgroundColor: '#f3f4f6',
+                borderColor: '#9ca3af',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRepayment}
+            variant="contained"
+            disabled={isRepaying || getFinalRepayAmount() === 0 || getFinalRepayAmount() < 500}
+            sx={{
+              background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)',
+                boxShadow: '0 4px 12px rgba(107, 33, 168, 0.3)',
+              },
+              textTransform: 'capitalize',
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 3,
+              boxShadow: 'none',
+            }}
+          >
+            {isRepaying ? 'Processing...' : `Pay ₹${getFinalRepayAmount()}`}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

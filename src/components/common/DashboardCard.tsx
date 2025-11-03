@@ -7,9 +7,11 @@ interface DashboardCardProps {
   title: string;
   subTitle?: string; 
   IconComponent?: React.ElementType;
-  type?: 'default' | 'loan'; // Add type prop to distinguish loan card
-  dueAmount?: string | number; // For loan card
-  onRepay?: () => void; // For loan card
+  type?: 'default' | 'loan';
+  dueAmount?: string | number;
+  onRepay?: () => void;
+  isRepayEnabled?: boolean;
+  alreadyRepaidToday?: boolean;
 }
 
 const DashboardCard: React.FC<DashboardCardProps> = ({ 
@@ -19,10 +21,17 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   IconComponent,
   type = 'default',
   dueAmount = 0,
-  onRepay
+  onRepay,
+  isRepayEnabled = false,
+  alreadyRepaidToday = false
 }) => {
   
-  // If it's a loan card, render the special layout
+  const getRepayButtonText = () => {
+    if (isRepayEnabled) return 'Repay Now';
+    if (alreadyRepaidToday) return 'Already Repaid Today';
+    return 'Available Saturday';
+  };
+
   if (type === 'loan') {
     return (
       <Card
@@ -42,25 +51,6 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
           position: 'relative',
         }}
       >
-        {/* Status Badge */}
-        {/* <Box 
-          sx={{ 
-            position: 'absolute',
-            top: -8,
-            right: 8,
-            backgroundColor: '#000',
-            color: 'white',
-            px: 1.2,
-            py: 0.4,
-            borderRadius: 1.5,
-            fontSize: '0.7rem',
-            fontWeight: 'bold',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-          }}
-        >
-          APPROVED
-        </Box> */}
-        
         <CardContent sx={{ 
           textAlign: 'center', 
           p: { xs: '8px', sm: '12px' },
@@ -78,7 +68,6 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
             {title}
           </Typography>
           
-          {/* Side by side layout */}
           <Box sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -86,7 +75,6 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
             gap: { xs: 1, sm: 2 }, 
             mb: 2 
           }}>
-            {/* Loan Amount */}
             <Box sx={{ flex: 1, textAlign: 'center' }}>
               <Typography 
                 variant="h4" 
@@ -100,7 +88,6 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
               </Typography>
             </Box>
             
-            {/* Due Amount */}
             <Box sx={{ flex: 1, textAlign: 'center' }}>
               <Typography 
                 variant="body2" 
@@ -129,13 +116,22 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
           <Button
             variant="contained"
             onClick={onRepay}
+            disabled={!isRepayEnabled}
             sx={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: isRepayEnabled 
+                ? 'rgba(255, 255, 255, 0.2)' 
+                : 'rgba(255, 255, 255, 0.1)',
               color: 'white',
               backdropFilter: 'blur(10px)',
               border: '1px solid rgba(255, 255, 255, 0.3)',
               '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                backgroundColor: isRepayEnabled 
+                  ? 'rgba(255, 255, 255, 0.3)' 
+                  : 'rgba(255, 255, 255, 0.1)',
+              },
+              '&:disabled': {
+                color: 'rgba(255, 255, 255, 0.5)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
               },
               fontWeight: 'bold',
               textTransform: 'none',
@@ -147,14 +143,13 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
               minWidth: '120px'
             }}
           >
-            Repay Now
+            {getRepayButtonText()}
           </Button>
         </CardContent>
       </Card>
     );
   }
 
-  // Default card layout
   return (
     <Card
       sx={{
