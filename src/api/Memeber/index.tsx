@@ -257,13 +257,20 @@ export const useGetMultiLevelSponsorship = () => {
 export const useActivatePackage = () => {
   return useMutation({
     mutationFn: async (data: { memberId: string; packageType: string }) => {
-      return await put(`/user/activate-package/${data.memberId}`, {
+      const response = await put(`/user/activate-package/${data.memberId}`, {
         packageType: data.packageType,
         activatedAt: new Date().toISOString()
       });
+      // Log commission data if available for debugging
+      if (response.success && (response.data?.commissions || response.commissions)) {
+        console.log("Commission data received:", response.data?.commissions || response.commissions);
+      }
+      return response;
     },
     onSuccess: (response) => {
       if (response.success) {
+        // Toast will be shown in component with commission details
+        // Only show basic success message here
         toast.success(response.message || "Package activated successfully!");
       } else {
         const errorMessage = response.message || "Activation failed";
@@ -272,7 +279,7 @@ export const useActivatePackage = () => {
       }
     },
     onError: (err: any) => {
-      let errorMessage = "An unexpected error occurred";
+      const errorMessage = err.response?.data?.message || err.message || "An unexpected error occurred";
       console.error("Activation error:", errorMessage, err);
       toast.error(errorMessage);
     },

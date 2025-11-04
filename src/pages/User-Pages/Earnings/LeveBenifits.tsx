@@ -12,12 +12,16 @@ const LevelBenifits = () => {
     error,
   } = useGetTransactionDetails();
 
-  const transactions = transactionsData?.data || transactionsData || [];
+  // Ensure transactions is always an array
+  const transactions = Array.isArray(transactionsData?.data) 
+    ? transactionsData.data 
+    : Array.isArray(transactionsData) 
+      ? transactionsData 
+      : [];
 
-  
   const levelBenefitsData = transactions
     .filter((transaction: any) => {
-      if (!transaction) return false;
+      if (!transaction || typeof transaction !== 'object') return false;
       
       const matchesLevel = 
         transaction.benefit_type?.toLowerCase()?.includes('level') ||
@@ -38,6 +42,7 @@ const LevelBenifits = () => {
       description: transaction.description,
       transactionType: transaction.transaction_type
     }));
+
 
   const noDataComponent = (
     <div style={{ padding: '24px' }}>
