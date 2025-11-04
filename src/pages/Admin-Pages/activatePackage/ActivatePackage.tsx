@@ -19,12 +19,21 @@ import {
   DialogActions,
   CircularProgress,
   Paper,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import {
   Cancel,
   CheckCircle,
   Search,
   Warning,
+  AttachMoney,
+  Person,
 } from '@mui/icons-material';
 import { useGetMemberDetails } from '../../../api/Admin';
 import { useActivatePackage } from '../../../api/Memeber';
@@ -35,12 +44,35 @@ interface PackageOption {
   amount: number;
 }
 
+interface CommissionData {
+  memberId?: string;
+  memberName?: string;
+  level?: number;
+  amount?: number;
+  commissionType?: string;
+}
+
+interface ActivationResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    commissions?: CommissionData[];
+    totalCommission?: number;
+    commissionDetails?: any;
+  };
+  commissions?: CommissionData[];
+  totalCommission?: number;
+}
+
 const ActivatePackage = () => {
   // State management
   const [memberId, setMemberId] = useState<string>('');
   const [searchedMemberId, setSearchedMemberId] = useState<string>('');
   const [selectedPackage, setSelectedPackage] = useState<string>('');
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
+  const [commissionData, setCommissionData] = useState<CommissionData[]>([]);
+  const [totalCommission, setTotalCommission] = useState<number>(0);
 
   const { data: selectedMember, isLoading: isSearching } = useGetMemberDetails(searchedMemberId);
   const { mutate: activatePackage, isPending: isActivating } = useActivatePackage();
@@ -64,12 +96,26 @@ const ActivatePackage = () => {
     activatePackage(
       { memberId: selectedMember.Member_id, packageType: selectedPackage },
       {
-        onSuccess: (response) => {
+        onSuccess: (response: ActivationResponse) => {
           if (response.success) {
             setShowConfirmDialog(false);
-            setMemberId('');
-            setSearchedMemberId('');
-            setSelectedPackage('');
+            
+            // Extract commission data from response
+            const commissions = response.data?.commissions || response.commissions || [];
+            const total = response.data?.totalCommission || response.totalCommission || 0;
+            
+            setCommissionData(commissions);
+            setTotalCommission(total);
+            
+            // Show success dialog with commission details
+            setShowSuccessDialog(true);
+            
+            // Reset form after a delay
+            setTimeout(() => {
+              setMemberId('');
+              setSearchedMemberId('');
+              setSelectedPackage('');
+            }, 100);
           }
         },
       }
@@ -306,7 +352,7 @@ const ActivatePackage = () => {
           Confirm Activation
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ backgroundColor: 'grey.50', borderRadius: 1 }}>
+          <Box sx={{ backgroundColor: 'grey.50', borderRadius: 1, p: 2, mb: 2 }}>
             <Typography variant="body1" fontWeight="medium">
               Member ID: {selectedMember?.Member_id}
             </Typography>
@@ -324,6 +370,9 @@ const ActivatePackage = () => {
             </strong>{' '}
             package for this member?
           </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block', fontStyle: 'italic' }}>
+            Note: Commission will be automatically distributed to eligible sponsors upon activation.
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowConfirmDialog(false)} disabled={isActivating} variant="outlined">
@@ -340,6 +389,138 @@ const ActivatePackage = () => {
             }}
           >
             {isActivating ? 'Activating...' : 'Confirm'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success Dialog with Commission Details */}
+      <Dialog
+        open={showSuccessDialog}
+        onClose={() => setShowSuccessDialog(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { backgroundColor: backgroundColor },
+        }}
+      >
+        <DialogTitle sx={{ color: primaryColor, fontWeight: 'medium', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CheckCircle sx={{ color: 'success.main' }} />
+          Package Activated Successfully!
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body1" fontWeight="medium" gutterBottom>
+              Member: {selectedMember?.Name} ({selectedMember?.Member_id})
+            </Typography>
+            <Typography variant="body1" fontWeight="medium" gutterBottom>
+              Package: {selectedPackage === 'standard' ? 'Standard Package (₹2600)' : 'RD Package (₹1000)'}
+            </Typography>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Commission Details Section */}
+          <Box sx={{ mt: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <AttachMoney sx={{ color: primaryColor }} />
+              <Typography variant="h6" fontWeight="medium" sx={{ color: primaryColor }}>
+                Commission Distribution
+              </Typography>
+            </Box>
+
+            {commissionData && commissionData.length > 0 ? (
+              <>
+                <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: 'grey.100' }}>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Level</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Member ID</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Member Name</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Commission Type</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Amount (₹)</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {commissionData.map((commission, index) => (
+                        <TableRow key={index} hover>
+                          <TableCell>
+                            {commission.level !== undefined ? `Level ${commission.level}` : 'N/A'}
+                          </TableCell>
+                          <TableCell>{commission.memberId || 'N/A'}</TableCell>
+                          <TableCell>{commission.memberName || 'N/A'}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={commission.commissionType || 'Commission'}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 'medium', color: 'success.main' }}>
+                            ₹{commission.amount?.toFixed(2) || '0.00'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                {totalCommission > 0 && (
+                  <Box
+                    sx={{
+                      backgroundColor: 'success.light',
+                      color: 'success.contrastText',
+                      p: 2,
+                      borderRadius: 1,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight="bold">
+                      Total Commission Distributed:
+                    </Typography>
+                    <Typography variant="h6" fontWeight="bold">
+                      ₹{totalCommission.toFixed(2)}
+                    </Typography>
+                  </Box>
+                )}
+              </>
+            ) : (
+              <Box
+                sx={{
+                  backgroundColor: 'info.light',
+                  color: 'info.contrastText',
+                  p: 2,
+                  borderRadius: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                <Person />
+                <Typography variant="body1">
+                  Commission has been processed successfully. Commission details will be reflected in the respective members' accounts.
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setShowSuccessDialog(false);
+              setCommissionData([]);
+              setTotalCommission(0);
+            }}
+            variant="contained"
+            sx={{
+              backgroundColor: primaryColor,
+              '&:hover': { backgroundColor: '#581c87' },
+            }}
+          >
+            Close
           </Button>
         </DialogActions>
       </Dialog>
