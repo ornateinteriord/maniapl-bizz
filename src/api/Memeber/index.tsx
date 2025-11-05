@@ -7,6 +7,7 @@ import axios from "axios";
 import TokenService from "../token/tokenService";
 
 
+
 export const useGetMemberDetails = (userId: string | null) => {
   const { getUser, setUser } = useContext(UserContext);
   return useQuery({
@@ -445,6 +446,66 @@ export const useRepayLoan = () => {
     onError: (error) => {
       const errorMessage = error.message || "Failed to process loan repayment";
       toast.error(errorMessage);
+    },
+  });
+};
+
+// Create Cashfree repayment order and return redirect/payment link
+
+export const useCreateRepaymentOrder = () => {
+  return useMutation({
+    mutationFn: async (paymentData: any) => {
+      console.log("🔄 Creating Cashfree order...", paymentData);
+      const response = await post("/payments/create-order", paymentData);
+
+      if (!response) throw new Error("No response from server");
+
+      const data = response.data || response;
+      if (!data.payment_session_id) {
+        console.error("❌ Missing payment_session_id:", data);
+        throw new Error("Invalid Cashfree order response");
+      }
+
+      return data;
+    },
+
+    onSuccess: (data: any) => {
+      console.log("✅ Cashfree order created successfully:", data);
+
+      const paymentSessionId = data.payment_session_id;
+      // const orderId = data.order_id;
+
+      if (!window.Cashfree) {
+        toast.error("Cashfree SDK not loaded. Please refresh the page.");
+        return;
+      }
+
+      const cashfree = new window.Cashfree({
+        mode: "sandbox", // or "production" when live
+      });
+
+      // Open Cashfree checkout popup
+      cashfree
+        .checkout({
+          paymentSessionId,
+          redirectTarget: "_self", // can be '_modal' or '_blank'
+        })
+        .then(() => {
+          console.log("💰 Cashfree checkout completed");
+        })
+        .catch((error: any) => {
+          console.error("❌ Cashfree checkout error:", error);
+          toast.error("Payment failed or canceled");
+        });
+    },
+
+    onError: (error: any) => {
+      console.error("❌ Failed to create Cashfree order:", error);
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to initialize payment";
+      toast.error(message);
     },
   });
 };
