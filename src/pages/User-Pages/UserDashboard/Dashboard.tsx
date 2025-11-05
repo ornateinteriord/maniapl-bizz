@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -39,24 +39,8 @@ import ShareIcon from '@mui/icons-material/Share';
 import { toast } from 'react-toastify';
 
 // Payment types
-interface PaymentCustomer {
-  customer_id?: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_name?: string;
-}
 
-interface PaymentNotes {
-  note?: string;
-  meta?: any;
-}
 
-interface CreateOrderRequest {
-  amount: number;
-  currency?: string;
-  customer: PaymentCustomer;
-  notes?: PaymentNotes;
-}
 
 const UserDashboard = () => { 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
