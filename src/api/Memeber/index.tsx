@@ -454,16 +454,35 @@ export const useRepayLoan = () => {
 
 export const useCreateRepaymentOrder = () => {
   return useMutation({
-    mutationFn: async (paymentData: any) => {
-      console.log("🔄 Creating Cashfree order...", paymentData);
-      const response = await post("/payments/create-order", paymentData);
+    mutationFn: async ({ paymentData, memberId }: { paymentData: any, memberId: string }) => {
+      console.log("🔄 Creating Cashfree order...", { paymentData, memberId });
+      
+      const requestData = {
+        amount: paymentData.amount,
+        memberId: memberId,
+        isLoanRepayment: true,
+        currency: paymentData.currency || "INR"
+      };
+
+      console.log("📤 Sending payment data:", requestData);
+      
+      const response = await post(`/payments/create-order`, requestData);
 
       if (!response) throw new Error("No response from server");
 
       const data = response.data || response;
-      if (!data.payment_session_id) {
+      
+      console.log("📥 Backend response:", data);
+      
+      // ✅ UPDATED: Check if the response indicates success
+      if (data.success === false) {
+        throw new Error(data.message || "Payment order creation failed");
+      }
+
+      // ✅ UPDATED: Also accept response without success flag but with payment_session_id
+      if (!data.payment_session_id && !data.paymentSessionId) {
         console.error("❌ Missing payment_session_id:", data);
-        throw new Error("Invalid Cashfree order response");
+        throw new Error(data.message || "Invalid payment order response");
       }
 
       return data;
@@ -472,8 +491,8 @@ export const useCreateRepaymentOrder = () => {
     onSuccess: (data: any) => {
       console.log("✅ Cashfree order created successfully:", data);
 
-      const paymentSessionId = data.payment_session_id;
-      // const orderId = data.order_id;
+      // ✅ UPDATED: Handle both payment_session_id and paymentSessionId
+      const paymentSessionId = data.payment_session_id || data.paymentSessionId;
 
       if (!window.Cashfree) {
         toast.error("Cashfree SDK not loaded. Please refresh the page.");
@@ -481,26 +500,27 @@ export const useCreateRepaymentOrder = () => {
       }
 
       const cashfree = new window.Cashfree({
-        mode: "sandbox", // or "production" when live
+        mode: "sandbox",
       });
 
-      // Open Cashfree checkout popup
       cashfree
         .checkout({
           paymentSessionId,
-          redirectTarget: "_self", // can be '_modal' or '_blank'
+          redirectTarget: "_self",
         })
         .then(() => {
-          console.log("💰 Cashfree checkout completed");
+          console.log("💰 Payment checkout completed");
         })
         .catch((error: any) => {
-          console.error("❌ Cashfree checkout error:", error);
+          console.error("❌ Payment checkout error:", error);
           toast.error("Payment failed or canceled");
         });
     },
 
     onError: (error: any) => {
       console.error("❌ Failed to create Cashfree order:", error);
+      console.error("❌ Error details:", error.response?.data);
+      
       const message =
         error?.response?.data?.message ||
         error?.message ||

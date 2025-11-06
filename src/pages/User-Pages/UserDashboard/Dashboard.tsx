@@ -138,38 +138,30 @@ const UserDashboard = () => {
 // CORRECT: Use backend to get proper Cashfree payment URL
 // UPDATED: Correct Cashfree payment flow
 const handleRepayment = () => {
-  if (!memberId) return toast.error("Member ID not found");
-  if (!memberDetails?.email || !memberDetails?.mobileno)
-    return toast.error("Customer email and phone are required");
+  if (!memberId) {
+    toast.error("Member ID not found");
+    return;
+  }
 
-  const customerPhone = memberDetails.mobileno.toString().slice(-10);
-  if (customerPhone.length !== 10)
-    return toast.error("Invalid phone number");
+  if (selectedRepayAmount <= 0) {
+    toast.error("Please select a valid repayment amount");
+    return;
+  }
 
-  const paymentData = {
-    amount: selectedRepayAmount,
-    currency: "INR",
-    customer: {
-      customer_id: memberId,
-      customer_email: memberDetails.email,
-      customer_phone: customerPhone,
-      customer_name: memberDetails.name || "Customer",
-    },
-    notes: {
-      note: `Loan repayment of ₹${selectedRepayAmount}`,
-      meta: {
-        memberId,
-        type: "loan_repayment",
-        timestamp: new Date().toISOString(),
-      },
-    },
-  };
+  console.log("💰 Starting repayment process:", {
+    memberId,
+    amount: selectedRepayAmount
+  });
 
-  console.log("📤 Sending payment data:", paymentData);
-  createRepaymentOrder(paymentData);
+  // ✅ CORRECT: Pass as object with paymentData and memberId properties
+  createRepaymentOrder({ 
+    paymentData: {
+      amount: selectedRepayAmount,
+      currency: "INR"
+    }, 
+    memberId 
+  });
 };
-
-
 
 
   const handleCopyReferralLink = () => {
@@ -314,53 +306,53 @@ const handleRepayment = () => {
   };
 
   // Test function to debug API connection
-  const testBackendConnection = async () => {
-    try {
-      console.log('🧪 Testing backend connection...');
+  // const testBackendConnection = async () => {
+  //   try {
+  //     console.log('🧪 Testing backend connection...');
       
-      const testData = {
-        amount: 1,
-        currency: "INR",
-        customer: {
-          customer_id: "test_user_123",
-          customer_email: "test@example.com",
-          customer_phone: "9876543210",
-          customer_name: "Test User"
-        },
-        notes: {
-          note: "Test payment connection"
-        }
-      };
+  //     const testData = {
+  //       amount: 1,
+  //       currency: "INR",
+  //       customer: {
+  //         customer_id: "test_user_123",
+  //         customer_email: "test@example.com",
+  //         customer_phone: "9876543210",
+  //         customer_name: "Test User"
+  //       },
+  //       notes: {
+  //         note: "Test payment connection"
+  //       }
+  //     };
       
-      const response = await fetch('/payments/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(testData)
-      });
+  //     const response = await fetch('/payments/create-order', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify(testData)
+  //     });
       
-      const data = await response.json();
-      console.log('🧪 Backend test response:', data);
+  //     const data = await response.json();
+  //     console.log('🧪 Backend test response:', data);
       
-      if (response.ok) {
-        toast.success(`Backend connected! Order ID: ${data.orderId}`);
-        console.log('✅ Backend response structure:', {
-          orderId: data.orderId,
-          paymentSessionId: data.paymentSessionId,
-          payment_session_id: data.payment_session_id,
-          cfOrderId: data.cfOrderId,
-          cf_order_id: data.cf_order_id
-        });
-      } else {
-        toast.error(`Backend error: ${data.error}`);
-      }
+  //     if (response.ok) {
+  //       toast.success(`Backend connected! Order ID: ${data.orderId}`);
+  //       console.log('✅ Backend response structure:', {
+  //         orderId: data.orderId,
+  //         paymentSessionId: data.paymentSessionId,
+  //         payment_session_id: data.payment_session_id,
+  //         cfOrderId: data.cfOrderId,
+  //         cf_order_id: data.cf_order_id
+  //       });
+  //     } else {
+  //       toast.error(`Backend error: ${data.error}`);
+  //     }
       
-    } catch (error) {
-      console.error('🧪 Backend test failed:', error);
-      toast.error('Backend connection failed');
-    }
-  };
+  //   } catch (error) {
+  //     console.error('🧪 Backend test failed:', error);
+  //     toast.error('Backend connection failed');
+  //   }
+  // };
 
   return (
     <>
@@ -420,11 +412,11 @@ const handleRepayment = () => {
       </div>
 
       {/* Temporary test button - remove in production */}
-      <Box sx={{ textAlign: 'center', mt: 2 }}>
+      {/* <Box sx={{ textAlign: 'center', mt: 2 }}>
         <Button onClick={testBackendConnection} variant="outlined" color="secondary" size="small">
           Test Backend Connection
         </Button>
-      </Box>
+      </Box> */}
 
       {/* Claim Reward Dialog */}
       <Dialog
