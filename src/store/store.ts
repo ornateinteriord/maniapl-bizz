@@ -51,3 +51,33 @@ export interface MemberDetails {
   rewardAmount?: number;
   // other properties from your API response
 }
+
+export interface PaymentCustomer {
+  customer_id?: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_name?: string;
+}
+
+export interface PaymentNotes {
+  note?: string;
+  meta?: any;
+}
+
+export interface CreateOrderRequest {
+  amount: number;
+  currency?: string;
+  customer: PaymentCustomer;
+  notes?: PaymentNotes;
+}
+
+export interface CreateOrderResponse {
+  orderId: string;
+  cfOrderId: string;
+  paymentSessionId: string;
+  amount: number;
+  currency: string;
+  status: string;
+}
+
+

@@ -7,6 +7,7 @@ import axios from "axios";
 import TokenService from "../token/tokenService";
 
 
+
 export const useGetMemberDetails = (userId: string | null) => {
   const { getUser, setUser } = useContext(UserContext);
   return useQuery({
@@ -445,6 +446,86 @@ export const useRepayLoan = () => {
     onError: (error) => {
       const errorMessage = error.message || "Failed to process loan repayment";
       toast.error(errorMessage);
+    },
+  });
+};
+
+// Create Cashfree repayment order and return redirect/payment link
+
+export const useCreateRepaymentOrder = () => {
+  return useMutation({
+    mutationFn: async ({ paymentData, memberId }: { paymentData: any, memberId: string }) => {
+      console.log("🔄 Creating Cashfree order...", { paymentData, memberId });
+      
+      const requestData = {
+        amount: paymentData.amount,
+        memberId: memberId,
+        isLoanRepayment: true,
+        currency: paymentData.currency || "INR"
+      };
+
+      console.log("📤 Sending payment data:", requestData);
+      
+      const response = await post(`/payments/create-order`, requestData);
+
+      if (!response) throw new Error("No response from server");
+
+      const data = response.data || response;
+      
+      console.log("📥 Backend response:", data);
+      
+      // ✅ UPDATED: Check if the response indicates success
+      if (data.success === false) {
+        throw new Error(data.message || "Payment order creation failed");
+      }
+
+      // ✅ UPDATED: Also accept response without success flag but with payment_session_id
+      if (!data.payment_session_id && !data.paymentSessionId) {
+        console.error("❌ Missing payment_session_id:", data);
+        throw new Error(data.message || "Invalid payment order response");
+      }
+
+      return data;
+    },
+
+    onSuccess: (data: any) => {
+      console.log("✅ Cashfree order created successfully:", data);
+
+      // ✅ UPDATED: Handle both payment_session_id and paymentSessionId
+      const paymentSessionId = data.payment_session_id || data.paymentSessionId;
+
+      if (!window.Cashfree) {
+        toast.error("Cashfree SDK not loaded. Please refresh the page.");
+        return;
+      }
+
+      const cashfree = new window.Cashfree({
+        mode: "sandbox",
+      });
+
+      cashfree
+        .checkout({
+          paymentSessionId,
+          redirectTarget: "_self",
+        })
+        .then(() => {
+          console.log("💰 Payment checkout completed");
+        })
+        .catch((error: any) => {
+          console.error("❌ Payment checkout error:", error);
+          toast.error("Payment failed or canceled");
+        });
+    },
+
+    onError: (error: any) => {
+      console.error("❌ Failed to create Cashfree order:", error);
+      console.error("❌ Error details:", error.response?.data);
+      
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to initialize payment";
+      toast.error(message);
     },
   });
 };

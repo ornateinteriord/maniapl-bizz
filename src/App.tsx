@@ -118,6 +118,7 @@ const UserDailyPayout = lazy(
 const UserWallet = lazy(() => import("./pages/User-Pages/Wallet/Wallet"));
 
 
+
 const LoansMemberPending = lazy(() => import("./pages/Loans/Loanspending/Pending"));
 const LoansMemberProcessed = lazy(() => import("./pages/Loans/Loansprocesssed/Processed"));
 const LoansRepaymentsList = lazy(() => import("./pages/Loans/Repaymentlist/LoansList"));
@@ -341,6 +342,7 @@ const RoutesProvider = ({
                <Route path="/user/loantransactions" element={<UserLoanTransaction />} />
               <Route path="/user/mailbox" element={<UserMailBox />} />
               <Route path="/user/wallet" element={<UserWallet />} />
+
             </Route>
 
            

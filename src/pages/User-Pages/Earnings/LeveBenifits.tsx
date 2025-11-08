@@ -31,7 +31,7 @@ const LevelBenifits = () => {
         transaction.transaction_type?.toLowerCase()?.includes('benefit') ||
         (transaction.level !== null && transaction.level !== undefined);
 
-      return matchesLevel;
+      return matchesLevel; 
     })
     .map((transaction: any) => ({
       id: transaction._id || transaction.transaction_id,

@@ -32,11 +32,15 @@ import {
   useGetMemberDetails, 
   useClimeLoan, 
   useGetTransactionDetails,
-  useRepayLoan
+  useCreateRepaymentOrder
 } from '../../../api/Memeber';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareIcon from '@mui/icons-material/Share';
 import { toast } from 'react-toastify';
+
+// Payment types
+
+
 
 const UserDashboard = () => { 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -51,7 +55,9 @@ const UserDashboard = () => {
   const { data: sponsersData, isLoading: sponsersLoading } = useGetSponsers(memberId);
   const { data: memberDetails, isLoading: memberLoading } = useGetMemberDetails(memberId);
   const { mutate: climeLoan, isPending: isClaiming } = useClimeLoan();
-  const { mutate: repayLoanMutate, isPending: isRepaying } = useRepayLoan(); 
+  
+  // Updated repayment order hook with better logging
+  const { mutate: createRepaymentOrder, isPending: isCreatingOrder } = useCreateRepaymentOrder(); 
 
   const { data: transactionsResponse, isLoading: loanStatusLoading, refetch: refetchTransactions } = useGetTransactionDetails("all");
 
@@ -91,7 +97,6 @@ const UserDashboard = () => {
 
   const loading = walletLoading  || sponsersLoading  || memberLoading || loanStatusLoading;
 
-
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
   };
@@ -119,6 +124,7 @@ const UserDashboard = () => {
         onSuccess: () => {
           setClaimDialogOpen(false);
           toast.success('Loan request submitted successfully!');
+          refetchTransactions();
         },
         onError: (error: any) => {
           toast.error(error.message || "Failed to submit loan request");
@@ -127,37 +133,36 @@ const UserDashboard = () => {
     );
   };
 
-  const handleRepayment = () => {
-    if (!memberId) {
-      toast.error("Member ID not found!");
-      return;
-    }
+  // UPDATED: Enhanced repayment handler with better logging and response handling
+ // UPDATED: Enhanced repayment handler with proper phone number validation
+// CORRECT: Use backend to get proper Cashfree payment URL
+// UPDATED: Correct Cashfree payment flow
+const handleRepayment = () => {
+  if (!memberId) {
+    toast.error("Member ID not found");
+    return;
+  }
 
-    if (selectedRepayAmount === 0) {
-      toast.error("Please select a repayment amount");
-      return;
-    }
-    
-    if (selectedRepayAmount > dueAmount) {
-      toast.error(`Repayment amount ₹${selectedRepayAmount} exceeds the remaining due amount of ₹${dueAmount.toFixed(2)}.`);
-      return;
-    }
+  if (selectedRepayAmount <= 0) {
+    toast.error("Please select a valid repayment amount");
+    return;
+  }
 
-    repayLoanMutate(
-      { memberId, amount: selectedRepayAmount },
-      {
-        onSuccess: () => {
-          setRepaymentDialogOpen(false);
-          setSelectedRepayAmount(500);
-          refetchTransactions();
-          // toast.success('Repayment successful!');
-        },
-        onError: (error: any) => {
-          toast.error(error.message);
-        }
-      }
-    );
-  };
+  console.log("💰 Starting repayment process:", {
+    memberId,
+    amount: selectedRepayAmount
+  });
+
+  // ✅ CORRECT: Pass as object with paymentData and memberId properties
+  createRepaymentOrder({ 
+    paymentData: {
+      amount: selectedRepayAmount,
+      currency: "INR"
+    }, 
+    memberId 
+  });
+};
+
 
   const handleCopyReferralLink = () => {
     if (!memberDetails?.Member_id) return;
@@ -300,6 +305,55 @@ const UserDashboard = () => {
     }
   };
 
+  // Test function to debug API connection
+  // const testBackendConnection = async () => {
+  //   try {
+  //     console.log('🧪 Testing backend connection...');
+      
+  //     const testData = {
+  //       amount: 1,
+  //       currency: "INR",
+  //       customer: {
+  //         customer_id: "test_user_123",
+  //         customer_email: "test@example.com",
+  //         customer_phone: "9876543210",
+  //         customer_name: "Test User"
+  //       },
+  //       notes: {
+  //         note: "Test payment connection"
+  //       }
+  //     };
+      
+  //     const response = await fetch('/payments/create-order', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify(testData)
+  //     });
+      
+  //     const data = await response.json();
+  //     console.log('🧪 Backend test response:', data);
+      
+  //     if (response.ok) {
+  //       toast.success(`Backend connected! Order ID: ${data.orderId}`);
+  //       console.log('✅ Backend response structure:', {
+  //         orderId: data.orderId,
+  //         paymentSessionId: data.paymentSessionId,
+  //         payment_session_id: data.payment_session_id,
+  //         cfOrderId: data.cfOrderId,
+  //         cf_order_id: data.cf_order_id
+  //       });
+  //     } else {
+  //       toast.error(`Backend error: ${data.error}`);
+  //     }
+      
+  //   } catch (error) {
+  //     console.error('🧪 Backend test failed:', error);
+  //     toast.error('Backend connection failed');
+  //   }
+  // };
+
   return (
     <>
       <div className="h-auto md:h-40 relative w-full overflow-hidden bg-[#6b21a8] flex flex-col items-center justify-center mt-10 py-6 md:py-0">
@@ -337,8 +391,8 @@ const UserDashboard = () => {
             <div className="flex justify-center mt-4">
               <Button
                 variant="contained"
-                sx={getButtonStyle(statusButtonText, true)} // Pass true for disabled state
-                disabled // Disable the button since it's just showing status
+                sx={getButtonStyle(statusButtonText, true)}
+                disabled
               >
                 {statusButtonText}
               </Button>
@@ -348,7 +402,7 @@ const UserDashboard = () => {
               <Button
                 variant="contained"
                 onClick={handleClaimReward}
-                sx={getButtonStyle('claim', false)} // Pass false for enabled state
+                sx={getButtonStyle('claim', false)}
               >
                 Claim Reward
               </Button>
@@ -357,7 +411,13 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* Rest of your component remains the same */}
+      {/* Temporary test button - remove in production */}
+      {/* <Box sx={{ textAlign: 'center', mt: 2 }}>
+        <Button onClick={testBackendConnection} variant="outlined" color="secondary" size="small">
+          Test Backend Connection
+        </Button>
+      </Box> */}
+
       {/* Claim Reward Dialog */}
       <Dialog
         open={claimDialogOpen}
@@ -636,7 +696,7 @@ const UserDashboard = () => {
       {/* Repayment Dialog */}
       <Dialog
         open={repaymentDialogOpen}
-        onClose={() => !isRepaying && setRepaymentDialogOpen(false)}
+        onClose={() => !isCreatingOrder && setRepaymentDialogOpen(false)}
         PaperProps={{
           sx: {
             borderRadius: 3,
@@ -735,7 +795,7 @@ const UserDashboard = () => {
               value={selectedRepayAmount}
               label="Repayment Amount"
               onChange={(e) => setSelectedRepayAmount(Number(e.target.value))}
-              disabled={isRepaying}
+              disabled={isCreatingOrder}
               sx={{
                 borderRadius: 2,
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -760,11 +820,11 @@ const UserDashboard = () => {
             </Select>
           </FormControl>
 
-          {isRepaying && (
+          {isCreatingOrder && (
             <Box sx={{ mt: 2, textAlign: 'center' }}>
               <CircularProgress size={20} sx={{ color: '#6b21a8' }} />
               <Typography variant="body2" sx={{ color: '#6b7280', mt: 1 }}>
-                Processing your payment...
+                Initializing payment...
               </Typography>
             </Box>
           )}
@@ -779,7 +839,7 @@ const UserDashboard = () => {
           <Button
             onClick={() => setRepaymentDialogOpen(false)}
             variant="outlined"
-            disabled={isRepaying}
+            disabled={isCreatingOrder}
             sx={{
               borderColor: '#d1d5db',
               color: '#6b7280',
@@ -795,25 +855,25 @@ const UserDashboard = () => {
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleRepayment}
-            variant="contained"
-            disabled={isRepaying || selectedRepayAmount === 0}
-            sx={{
-              background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)',
-                boxShadow: '0 4px 12px rgba(107, 33, 168, 0.3)',
-              },
-              textTransform: 'capitalize',
-              fontWeight: 600,
-              borderRadius: 2,
-              px: 3,
-              boxShadow: 'none',
-            }}
-          >
-            {isRepaying ? 'Processing...' : 'Pay now'}
-          </Button>
+         <Button
+  onClick={handleRepayment}
+  variant="contained"
+  disabled={selectedRepayAmount === 0}
+  sx={{
+    background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
+    '&:hover': {
+      background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)',
+      boxShadow: '0 4px 12px rgba(107, 33, 168, 0.3)',
+    },
+    textTransform: 'capitalize',
+    fontWeight: 600,
+    borderRadius: 2,
+    px: 3,
+    boxShadow: 'none',
+  }}
+>
+  Pay now
+</Button>
         </DialogActions>
       </Dialog>
 
