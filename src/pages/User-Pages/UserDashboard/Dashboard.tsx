@@ -1,3 +1,4 @@
+// components/UserDashboard.tsx
 import { useState } from 'react';
 import { 
   Card, 
@@ -32,15 +33,11 @@ import {
   useGetMemberDetails, 
   useClimeLoan, 
   useGetTransactionDetails,
-  useCreateRepaymentOrder
+  useRepayLoan
 } from '../../../api/Memeber';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareIcon from '@mui/icons-material/Share';
 import { toast } from 'react-toastify';
-
-// Payment types
-
-
 
 const UserDashboard = () => { 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -56,9 +53,9 @@ const UserDashboard = () => {
   const { data: memberDetails, isLoading: memberLoading } = useGetMemberDetails(memberId);
   const { mutate: climeLoan, isPending: isClaiming } = useClimeLoan();
   
-  // Updated repayment order hook with better logging
-  const { mutate: createRepaymentOrder, isPending: isCreatingOrder } = useCreateRepaymentOrder(); 
-
+  // Use the enhanced repay loan hook
+  const { mutate: repayLoan, isPending: isRepaying } = useRepayLoan();
+  
   const { data: transactionsResponse, isLoading: loanStatusLoading, refetch: refetchTransactions } = useGetTransactionDetails("all");
 
   const allTransactions = transactionsResponse?.data || [];
@@ -85,6 +82,7 @@ const UserDashboard = () => {
          transaction.status.toLowerCase() === 'approved')
       )
     : null;
+    
   const getStatusButtonText = () => {
     if (processingOrApprovedTransaction) {
       return processingOrApprovedTransaction.status;
@@ -95,7 +93,7 @@ const UserDashboard = () => {
   const statusButtonText = getStatusButtonText();
   const hasProcessingOrApprovedStatus = !!statusButtonText;
 
-  const loading = walletLoading  || sponsersLoading  || memberLoading || loanStatusLoading;
+  const loading = walletLoading || sponsersLoading || memberLoading || loanStatusLoading;
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
@@ -133,36 +131,45 @@ const UserDashboard = () => {
     );
   };
 
-  // UPDATED: Enhanced repayment handler with better logging and response handling
- // UPDATED: Enhanced repayment handler with proper phone number validation
-// CORRECT: Use backend to get proper Cashfree payment URL
-// UPDATED: Correct Cashfree payment flow
-const handleRepayment = () => {
-  if (!memberId) {
-    toast.error("Member ID not found");
-    return;
-  }
+  // Enhanced repayment handler
+  const handleRepayment = () => {
+    if (!memberId) {
+      toast.error("Member ID not found");
+      return;
+    }
 
-  if (selectedRepayAmount <= 0) {
-    toast.error("Please select a valid repayment amount");
-    return;
-  }
+    if (selectedRepayAmount <= 0) {
+      toast.error("Please select a valid repayment amount");
+      return;
+    }
 
-  console.log("💰 Starting repayment process:", {
-    memberId,
-    amount: selectedRepayAmount
-  });
+    if (selectedRepayAmount > dueAmount) {
+      toast.error(`Repayment amount cannot exceed due amount of ₹${dueAmount}`);
+      return;
+    }
 
-  // ✅ CORRECT: Pass as object with paymentData and memberId properties
-  createRepaymentOrder({ 
-    paymentData: {
+    console.log("💰 Starting repayment process:", {
+      memberId,
       amount: selectedRepayAmount,
-      currency: "INR"
-    }, 
-    memberId 
-  });
-};
+      dueAmount
+    });
 
+    repayLoan({
+      memberId,
+      amount: selectedRepayAmount,
+      memberDetails
+    }, {
+      onSuccess: (data) => {
+        console.log("✅ Repayment initiated successfully:", data);
+        setRepaymentDialogOpen(false);
+        // The actual payment flow will redirect to Cashfree
+      },
+      onError: (error: any) => {
+        console.error("❌ Failed to create repayment order:", error);
+        toast.error("Failed to initialize payment. Please try again.");
+      }
+    });
+  };
 
   const handleCopyReferralLink = () => {
     if (!memberDetails?.Member_id) return;
@@ -305,55 +312,6 @@ const handleRepayment = () => {
     }
   };
 
-  // Test function to debug API connection
-  // const testBackendConnection = async () => {
-  //   try {
-  //     console.log('🧪 Testing backend connection...');
-      
-  //     const testData = {
-  //       amount: 1,
-  //       currency: "INR",
-  //       customer: {
-  //         customer_id: "test_user_123",
-  //         customer_email: "test@example.com",
-  //         customer_phone: "9876543210",
-  //         customer_name: "Test User"
-  //       },
-  //       notes: {
-  //         note: "Test payment connection"
-  //       }
-  //     };
-      
-  //     const response = await fetch('/payments/create-order', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify(testData)
-  //     });
-      
-  //     const data = await response.json();
-  //     console.log('🧪 Backend test response:', data);
-      
-  //     if (response.ok) {
-  //       toast.success(`Backend connected! Order ID: ${data.orderId}`);
-  //       console.log('✅ Backend response structure:', {
-  //         orderId: data.orderId,
-  //         paymentSessionId: data.paymentSessionId,
-  //         payment_session_id: data.payment_session_id,
-  //         cfOrderId: data.cfOrderId,
-  //         cf_order_id: data.cf_order_id
-  //       });
-  //     } else {
-  //       toast.error(`Backend error: ${data.error}`);
-  //     }
-      
-  //   } catch (error) {
-  //     console.error('🧪 Backend test failed:', error);
-  //     toast.error('Backend connection failed');
-  //   }
-  // };
-
   return (
     <>
       <div className="h-auto md:h-40 relative w-full overflow-hidden bg-[#6b21a8] flex flex-col items-center justify-center mt-10 py-6 md:py-0">
@@ -410,103 +368,6 @@ const handleRepayment = () => {
           ) : null}
         </div>
       </div>
-
-      {/* Temporary test button - remove in production */}
-      {/* <Box sx={{ textAlign: 'center', mt: 2 }}>
-        <Button onClick={testBackendConnection} variant="outlined" color="secondary" size="small">
-          Test Backend Connection
-        </Button>
-      </Box> */}
-
-      {/* Claim Reward Dialog */}
-      <Dialog
-        open={claimDialogOpen}
-        onClose={handleCloseDialog}
-        aria-labelledby="claim-reward-dialog-title"
-        aria-describedby="claim-reward-dialog-description"
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            padding: 1,
-            minWidth: { xs: '300px', sm: '400px' }
-          }
-        }}
-      >
-        <DialogTitle 
-          id="claim-reward-dialog-title"
-          sx={{ 
-            textAlign: 'center',
-            color: '#7e22ce',
-            fontWeight: 'bold',
-            fontSize: '1.5rem',
-            pb: 1
-          }}
-        >
-          🎉 Congratulations!
-        </DialogTitle>
-        
-        <DialogContent>
-          <DialogContentText 
-            id="claim-reward-dialog-description"
-            sx={{
-              textAlign: 'center',
-              color: '#4b5563',
-              fontSize: '1.1rem',
-              mb: 2
-            }}
-          >
-            <p>
-              You are eligible for a reward loan of{" "}
-              <span style={{ color: "gold", fontWeight: "bold" }}>₹5000</span>!
-            </p>
-          </DialogContentText>
-          
-          <DialogContentText 
-            sx={{
-              textAlign: 'center',
-              color: '#6b7280',
-              fontSize: '0.9rem'
-            }}
-          >
-            Submit your loan request and our admin team will review and approve the appropriate amount based on your eligibility.
-          </DialogContentText>
-        </DialogContent>
-        
-        <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3, pt: 1 }}>
-          <Button
-            onClick={handleCloseDialog}
-            variant="outlined"
-            sx={{
-              textTransform: 'capitalize',
-              borderColor: '#6b7280',
-              color: '#6b7280',
-              '&:hover': {
-                borderColor: '#4b5563',
-                backgroundColor: '#f3f4f6',
-              },
-              fontWeight: 'bold',
-              px: 4,
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmClaim}
-            variant="contained"
-            autoFocus
-            disabled={isClaiming}
-            sx={{
-              textTransform: 'capitalize',
-              backgroundColor: '#DDAC17',
-              '&:hover': { backgroundColor: '#Ecc440' },
-              fontWeight: 'bold',
-              px: 4,
-            }}
-          >
-            {isClaiming ? 'Processing...' : 'Submit Request'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Referral Link Box */}
       <Box 
@@ -693,10 +554,100 @@ const handleRepayment = () => {
         )}
       </Grid>
 
+      {/* Claim Reward Dialog */}
+      <Dialog
+        open={claimDialogOpen}
+        onClose={handleCloseDialog}
+        aria-labelledby="claim-reward-dialog-title"
+        aria-describedby="claim-reward-dialog-description"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            padding: 1,
+            minWidth: { xs: '300px', sm: '400px' }
+          }
+        }}
+      >
+        <DialogTitle 
+          id="claim-reward-dialog-title"
+          sx={{ 
+            textAlign: 'center',
+            color: '#7e22ce',
+            fontWeight: 'bold',
+            fontSize: '1.5rem',
+            pb: 1
+          }}
+        >
+          🎉 Congratulations!
+        </DialogTitle>
+        
+        <DialogContent>
+          <DialogContentText 
+            id="claim-reward-dialog-description"
+            sx={{
+              textAlign: 'center',
+              color: '#4b5563',
+              fontSize: '1.1rem',
+              mb: 2
+            }}
+          >
+            <p>
+              You are eligible for a reward loan of{" "}
+              <span style={{ color: "gold", fontWeight: "bold" }}>₹5000</span>!
+            </p>
+          </DialogContentText>
+          
+          <DialogContentText 
+            sx={{
+              textAlign: 'center',
+              color: '#6b7280',
+              fontSize: '0.9rem'
+            }}
+          >
+            Submit your loan request and our admin team will review and approve the appropriate amount based on your eligibility.
+          </DialogContentText>
+        </DialogContent>
+        
+        <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3, pt: 1 }}>
+          <Button
+            onClick={handleCloseDialog}
+            variant="outlined"
+            sx={{
+              textTransform: 'capitalize',
+              borderColor: '#6b7280',
+              color: '#6b7280',
+              '&:hover': {
+                borderColor: '#4b5563',
+                backgroundColor: '#f3f4f6',
+              },
+              fontWeight: 'bold',
+              px: 4,
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmClaim}
+            variant="contained"
+            autoFocus
+            disabled={isClaiming}
+            sx={{
+              textTransform: 'capitalize',
+              backgroundColor: '#DDAC17',
+              '&:hover': { backgroundColor: '#Ecc440' },
+              fontWeight: 'bold',
+              px: 4,
+            }}
+          >
+            {isClaiming ? 'Processing...' : 'Submit Request'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Repayment Dialog */}
       <Dialog
         open={repaymentDialogOpen}
-        onClose={() => !isCreatingOrder && setRepaymentDialogOpen(false)}
+        onClose={() => !isRepaying && setRepaymentDialogOpen(false)}
         PaperProps={{
           sx: {
             borderRadius: 3,
@@ -795,7 +746,7 @@ const handleRepayment = () => {
               value={selectedRepayAmount}
               label="Repayment Amount"
               onChange={(e) => setSelectedRepayAmount(Number(e.target.value))}
-              disabled={isCreatingOrder}
+              disabled={isRepaying}
               sx={{
                 borderRadius: 2,
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -820,7 +771,7 @@ const handleRepayment = () => {
             </Select>
           </FormControl>
 
-          {isCreatingOrder && (
+          {isRepaying && (
             <Box sx={{ mt: 2, textAlign: 'center' }}>
               <CircularProgress size={20} sx={{ color: '#6b21a8' }} />
               <Typography variant="body2" sx={{ color: '#6b7280', mt: 1 }}>
@@ -839,7 +790,7 @@ const handleRepayment = () => {
           <Button
             onClick={() => setRepaymentDialogOpen(false)}
             variant="outlined"
-            disabled={isCreatingOrder}
+            disabled={isRepaying}
             sx={{
               borderColor: '#d1d5db',
               color: '#6b7280',
@@ -855,25 +806,25 @@ const handleRepayment = () => {
           >
             Cancel
           </Button>
-         <Button
-  onClick={handleRepayment}
-  variant="contained"
-  disabled={selectedRepayAmount === 0}
-  sx={{
-    background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
-    '&:hover': {
-      background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)',
-      boxShadow: '0 4px 12px rgba(107, 33, 168, 0.3)',
-    },
-    textTransform: 'capitalize',
-    fontWeight: 600,
-    borderRadius: 2,
-    px: 3,
-    boxShadow: 'none',
-  }}
->
-  Pay now
-</Button>
+          <Button
+            onClick={handleRepayment}
+            variant="contained"
+            disabled={isRepaying || selectedRepayAmount === 0}
+            sx={{
+              background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)',
+                boxShadow: '0 4px 12px rgba(107, 33, 168, 0.3)',
+              },
+              textTransform: 'capitalize',
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 3,
+              boxShadow: 'none',
+            }}
+          >
+            {isRepaying ? 'Processing...' : 'Pay now'}
+          </Button>
         </DialogActions>
       </Dialog>
 

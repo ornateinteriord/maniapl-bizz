@@ -42,8 +42,10 @@ import {
 import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
 import { getLoansListColumns } from '../../../utils/DataTableColumnsProvider';
 import { useGetAllTransactionDetails } from '../../../api/Admin';
+import { 
+  useCreatePaymentOrder
+} from '../../../api/Memeber';
 import { toast } from 'react-toastify';
-import { useRepayLoan } from '../../../api/Memeber';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -87,8 +89,8 @@ export default function LoansList() {
     refetch 
   } = useGetAllTransactionDetails();
 
-  const { mutate: repayLoan, isPending: isRepaying } = useRepayLoan();
-
+  const { mutate: createPaymentOrder, isPending: isCreatingOrder } = useCreatePaymentOrder();
+  
   const allTransactions = transactionsResponse || [];
   const loanTransactions = allTransactions
     .filter((transaction: any) => 
@@ -158,19 +160,26 @@ export default function LoansList() {
       return;
     }
 
-    repayLoan(
-      { memberId, amount: finalAmount },
-      {
-        onSuccess: () => {
-          setRepayDialogOpen(false);
-          setManualAmount('');
-          refetch();
-        },
-        onError: (err: any) => {
-          toast.error(err.message || 'Repayment failed');
-        },
+    // Create payment order instead of direct repayment
+    createPaymentOrder({
+      amount: finalAmount,
+      currency: "INR",
+      customer: {
+        customer_id: memberId.toString(),
+        customer_email: selectedLoan.email || "",
+        customer_phone: selectedLoan.mobileno || "",
+        customer_name: selectedLoan.Name || ""
       }
-    );
+    }, {
+      onSuccess: () => {
+        setRepayDialogOpen(false);
+        setManualAmount('');
+        refetch();
+      },
+      onError: (err: any) => {
+        toast.error(err.message || 'Failed to initialize payment');
+      },
+    });
   };
 
   const handleSearch = () => refetch();
@@ -332,7 +341,7 @@ export default function LoansList() {
       {/* Enhanced Repay Dialog */}
       <Dialog 
         open={repayDialogOpen} 
-        onClose={() => !isRepaying && setRepayDialogOpen(false)}
+        onClose={() => !isCreatingOrder && setRepayDialogOpen(false)}
         PaperProps={{
           sx: {
             borderRadius: 3,
@@ -425,8 +434,8 @@ export default function LoansList() {
               }
             }}
           >
-            <Tab label="Quick Pay" disabled={isRepaying} />
-            <Tab label="Manual Pay" disabled={isRepaying} />
+            <Tab label="Quick Pay" disabled={isCreatingOrder} />
+            <Tab label="Manual Pay" disabled={isCreatingOrder} />
           </Tabs>
 
           <TabPanel value={tabValue} index={0}>
@@ -436,7 +445,7 @@ export default function LoansList() {
                 value={repayAmount}
                 label="Repayment Amount"
                 onChange={(e) => setRepayAmount(Number(e.target.value))}
-                disabled={isRepaying}
+                disabled={isCreatingOrder}
                 sx={{
                   borderRadius: 2,
                   '& .MuiOutlinedInput-notchedOutline': {
@@ -468,7 +477,7 @@ export default function LoansList() {
               label="Enter Amount"
               value={manualAmount}
               onChange={handleManualAmountChange}
-              disabled={isRepaying}
+              disabled={isCreatingOrder}
               placeholder="Enter repayment amount"
               InputProps={{
                 startAdornment: <InputAdornment position="start">₹</InputAdornment>,
@@ -483,7 +492,7 @@ export default function LoansList() {
             />
           </TabPanel>
 
-          {isRepaying && (
+          {isCreatingOrder && (
             <Box sx={{ mt: 2, textAlign: 'center' }}>
               <CircularProgress size={20} sx={{ color: '#6b21a8' }} />
               <Typography variant="body2" sx={{ color: '#6b7280', mt: 1 }}>
@@ -502,7 +511,7 @@ export default function LoansList() {
           <Button
             onClick={() => setRepayDialogOpen(false)}
             variant="outlined"
-            disabled={isRepaying}
+            disabled={isCreatingOrder}
             sx={{
               borderColor: '#d1d5db',
               color: '#6b7280',
@@ -521,7 +530,7 @@ export default function LoansList() {
           <Button
             onClick={handleRepayment}
             variant="contained"
-            disabled={isRepaying || getFinalRepayAmount() === 0 || getFinalRepayAmount() < 500}
+            disabled={isCreatingOrder || getFinalRepayAmount() === 0 || getFinalRepayAmount() < 500}
             sx={{
               background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
               '&:hover': {
@@ -535,7 +544,7 @@ export default function LoansList() {
               boxShadow: 'none',
             }}
           >
-            {isRepaying ? 'Processing...' : `Pay ₹${getFinalRepayAmount()}`}
+            {isCreatingOrder ? 'Processing...' : `Pay ₹${getFinalRepayAmount()}`}
           </Button>
         </DialogActions>
       </Dialog>
