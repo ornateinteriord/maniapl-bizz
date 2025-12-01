@@ -1,23 +1,24 @@
 // components/UserDashboard.tsx
-import { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  Grid, 
-  Typography, 
-  Button, 
-  Link, 
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+  Card,
+  CardContent,
+  Grid,
+  Typography,
+  Button,
+  Link,
   Box,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  DialogContentText, 
+  DialogContentText,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress 
+  CircularProgress
 } from '@mui/material';
 import { cn } from '../../../lib/utils';
 import '../../Dashboard/dashboard.scss';
@@ -26,37 +27,68 @@ import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
 import DashboardCard from '../../../components/common/DashboardCard';
 import { getUserDashboardTableColumns } from '../../../utils/DataTableColumnsProvider';
 import TokenService from '../../../api/token/tokenService';
-import { 
-  useCheckSponsorReward, 
-  useGetWalletOverview, 
-  useGetSponsers, 
-  useGetMemberDetails, 
-  useClimeLoan, 
+import {
+  useCheckSponsorReward,
+  useGetWalletOverview,
+  useGetSponsers,
+  useGetMemberDetails,
+  useClimeLoan,
   useGetTransactionDetails,
-  useRepayLoan
+  useRepayLoan,
+  useVerifyPayment,
+  parsePaymentRedirectParams
 } from '../../../api/Memeber';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareIcon from '@mui/icons-material/Share';
 import { toast } from 'react-toastify';
 
-const UserDashboard = () => { 
+const UserDashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const [repaymentDialogOpen, setRepaymentDialogOpen] = useState(false);
   const [selectedRepayAmount, setSelectedRepayAmount] = useState(500);
+  const [paymentProcessed, setPaymentProcessed] = useState(false);
 
-  const memberId = TokenService.getMemberId(); 
-  
+  const memberId = TokenService.getMemberId();
+
   const { data: sponsorRewardData } = useCheckSponsorReward(memberId);
   const { data: walletOverview, isLoading: walletLoading } = useGetWalletOverview(memberId);
   const { data: sponsersData, isLoading: sponsersLoading } = useGetSponsers(memberId);
   const { data: memberDetails, isLoading: memberLoading } = useGetMemberDetails(memberId);
   const { mutate: climeLoan, isPending: isClaiming } = useClimeLoan();
-  
+
   // Use the enhanced repay loan hook
   const { mutate: repayLoan, isPending: isRepaying } = useRepayLoan();
-  
+
+  // Payment verification hook
+  const { mutate: verifyPayment, isPending: isVerifyingPayment } = useVerifyPayment();
+
   const { data: transactionsResponse, isLoading: loanStatusLoading, refetch: refetchTransactions } = useGetTransactionDetails("all");
+
+  // Handle payment redirect from Cashfree
+  useEffect(() => {
+    const paymentParams = parsePaymentRedirectParams(searchParams);
+
+    if (paymentParams.order_id && paymentParams.payment_status && !paymentProcessed) {
+      console.log("🔄 Processing payment redirect:", paymentParams);
+      setPaymentProcessed(true);
+
+      // Verify the payment with backend
+      verifyPayment(paymentParams.order_id, {
+        onSuccess: () => {
+          // Clear URL params after processing
+          setSearchParams({});
+          // Refresh transactions to show updated data
+          refetchTransactions();
+        },
+        onError: () => {
+          // Still clear URL params even on error
+          setSearchParams({});
+        }
+      });
+    }
+  }, [searchParams, paymentProcessed, verifyPayment, setSearchParams, refetchTransactions]);
 
   const allTransactions = transactionsResponse?.data || [];
   const isRepayEnabled = transactionsResponse?.isRepayEnabled || false;
@@ -174,7 +206,7 @@ const UserDashboard = () => {
   const handleCopyReferralLink = () => {
     if (!memberDetails?.Member_id) return;
     
-    const referralLink = `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}`;
+    const referralLink = `https://www.manipalsociety.com/register?ref=${memberDetails.Member_id}`;
     
     navigator.clipboard.writeText(referralLink)
       .then(() => {
@@ -188,7 +220,7 @@ const UserDashboard = () => {
   const handleShareReferralLink = () => {
     if (!memberDetails?.Member_id) return;
     
-    const referralLink = `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}`;
+    const referralLink = `https://www.manipalsociety.com/register?ref=${memberDetails.Member_id}`;
     
     if (navigator.share) {
       navigator.share({
@@ -314,6 +346,30 @@ const UserDashboard = () => {
 
   return (
     <>
+      {/* Payment verification loading overlay */}
+      {isVerifyingPayment && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <CircularProgress size={60} sx={{ color: 'white', mb: 2 }} />
+          <Typography variant="h6" sx={{ color: 'white' }}>
+            Verifying your payment...
+          </Typography>
+        </Box>
+      )}
+
       <div className="h-auto md:h-40 relative w-full overflow-hidden bg-[#6b21a8] flex flex-col items-center justify-center mt-10 py-6 md:py-0">
         <div className="absolute inset-0 w-full h-full z-20 [mask-image:radial-gradient(transparent,white)] pointer-events-none" />
 
@@ -410,7 +466,7 @@ const UserDashboard = () => {
             }}
           >
             <Link
-              href={memberDetails?.Member_id ? `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : '#'}
+              href={memberDetails?.Member_id ? `https://www.manipalsociety.com/register?ref=${memberDetails.Member_id}` : '#'}
               target="_blank" 
               rel="noopener noreferrer"
               sx={{
@@ -437,7 +493,7 @@ const UserDashboard = () => {
                 }}
               >
                 {memberDetails?.Member_id ? 
-                  `https://mscs-beige.vercel.app/register?ref=${memberDetails.Member_id}` : 
+                  `https://www.manipalsociety.com/register?ref=${memberDetails.Member_id}` : 
                   'Loading...'
                 }
               </Typography>
