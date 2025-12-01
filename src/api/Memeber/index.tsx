@@ -187,26 +187,8 @@ export const useRevertLoanRepayment = () => {
   });
 };
 
-
-// Get Cashfree mode based on environment
-const getCashfreeMode = (paymentSessionId?: string): "production" | "sandbox" => {
-  // First check if we can determine mode from paymentSessionId
-  if (paymentSessionId) {
-    // Sandbox session IDs typically have "test" or "sandbox" in them
-    if (paymentSessionId.toLowerCase().includes('test') || paymentSessionId.toLowerCase().includes('sandbox')) {
-      return "sandbox";
-    }
-    // If it doesn't contain test indicators, assume production
-    return "production";
-  }
-  
-  // Fallback to environment variable
-  const apiBase = import.meta.env.VITE_CASHFREE_API_BASE || "";
-  return apiBase.includes("sandbox") ? "sandbox" : "production";
-};
-
 // Load Cashfree SDK dynamically
-const loadCashfreeSDK = (paymentSessionId?: string): Promise<void> => {
+const loadCashfreeSDK = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (window.Cashfree) {
       console.log("✅ Cashfree SDK already loaded");
@@ -215,54 +197,55 @@ const loadCashfreeSDK = (paymentSessionId?: string): Promise<void> => {
     }
 
     const script = document.createElement("script");
-    const mode = getCashfreeMode(paymentSessionId);
     script.src = `https://sdk.cashfree.com/js/v3/cashfree.js`;
-    
+
     script.onload = () => {
-      console.log("✅ Cashfree SDK loaded successfully in", mode, "mode");
+      console.log("✅ Cashfree SDK loaded successfully");
       resolve();
     };
-    
+
     script.onerror = (error) => {
       console.error("❌ Failed to load Cashfree SDK:", error);
       reject(new Error("Failed to load payment system"));
     };
-    
+
     document.head.appendChild(script);
   });
 };
 
-// Initialize Cashfree checkout
-const initializeCashfreeCheckout = async (paymentSessionId: string): Promise<void> => {
+// Initialize Cashfree checkout with environment from backend response
+const initializeCashfreeCheckout = async (
+  paymentSessionId: string,
+  cashfreeEnv: "sandbox" | "production"
+): Promise<void> => {
   try {
     console.log("🚀 Initializing Cashfree checkout...");
-    
+    console.log("🔄 Using Cashfree environment from backend:", cashfreeEnv);
+
     // Ensure SDK is loaded
-    await loadCashfreeSDK(paymentSessionId);
-    
-    const mode = getCashfreeMode(paymentSessionId);
-    console.log("🔄 Cashfree mode:", mode);
-    
+    await loadCashfreeSDK();
+
     if (!window.Cashfree) {
       throw new Error("Cashfree SDK not available after loading");
     }
-    
+
+    // IMPORTANT: Use the environment from backend to ensure consistency
     const cashfree = new window.Cashfree({
-      mode: mode,
+      mode: cashfreeEnv,
     });
-    
+
     console.log("💳 Starting checkout with paymentSessionId:", paymentSessionId);
-    
+
     const result = await cashfree.checkout({
       paymentSessionId,
       redirectTarget: "_self",
     });
-    
+
     console.log("💰 Payment checkout completed:", result);
-    
+
   } catch (error: any) {
     console.error("❌ Payment checkout error:", error);
-    
+
     let errorMessage = "Payment initialization failed";
     if (error?.message?.includes("network")) {
       errorMessage = "Network error. Please check your connection and try again.";
@@ -271,7 +254,7 @@ const initializeCashfreeCheckout = async (paymentSessionId: string): Promise<voi
     } else if (error?.message) {
       errorMessage = error.message;
     }
-    
+
     toast.error(errorMessage);
     throw error;
   }
@@ -305,9 +288,13 @@ export const useCreatePaymentOrder = () => {
     
     onSuccess: async (data: CreateOrderResponse) => {
       console.log("✅ Payment order created successfully:", data);
-      
+
       try {
-        await initializeCashfreeCheckout(data.payment_session_id);
+        // Use cashfree_env from backend to ensure environment consistency
+        const cashfreeEnv = data.cashfree_env || "sandbox";
+        console.log("🔄 Using Cashfree environment:", cashfreeEnv);
+
+        await initializeCashfreeCheckout(data.payment_session_id, cashfreeEnv);
         toast.success("Redirecting to payment gateway...");
       } catch (error) {
         console.error("❌ Failed to initialize payment checkout:", error);

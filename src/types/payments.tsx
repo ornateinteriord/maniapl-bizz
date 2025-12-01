@@ -23,6 +23,8 @@ export interface CreateOrderResponse {
   is_loan_repayment: boolean;
   member_id: string;
   member_name: string;
+  // Cashfree environment from backend (must match to avoid session ID mismatch)
+  cashfree_env: "sandbox" | "production";
   loan_details?: {
     current_due_amount: number;
     repayment_amount: number;
