@@ -6,57 +6,93 @@ import { toast } from "react-toastify";
 import { get, post, put } from "../Api";
 import axios from "axios";
 import TokenService from "../token/tokenService";
-import { CreateOrderRequest, CreateOrderResponse } from "../../types/payments";
+import { CreateOrderRequest, CreateOrderResponse, VerifyPaymentResponse, PaymentStatus } from "../../types/payments";
 
-// Webhook handler for processing payment events from Cashfree
-export const useHandlePaymentWebhook = () => {
+// Verify payment status after redirect from Cashfree
+// This is what the frontend should call after user returns from payment
+export const useVerifyPayment = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (webhookData: any) => {
-      console.log("🔄 Processing payment webhook...", webhookData);
-      
-      const response = await post(`/payments/webhook`, webhookData);
-      
+    mutationFn: async (orderId: string): Promise<VerifyPaymentResponse> => {
+      console.log("🔄 Verifying payment status for order:", orderId);
+
+      const response = await get(`/payments/verify-payment/${orderId}`);
+
       if (!response) throw new Error("No response from server");
-      
+
       const data = response.data || response;
-      
-      console.log("📥 Webhook processed:", data);
-      
-      if (data.success === false) {
-        throw new Error(data.message || "Webhook processing failed");
-      }
-      
+
+      console.log("📥 Payment verification result:", data);
+
       return data;
     },
-    
-    onSuccess: (data: any) => {
-      console.log("✅ Webhook processed successfully:", data);
-      
+
+    onSuccess: (data: VerifyPaymentResponse) => {
+      console.log("✅ Payment verification completed:", data);
+
+      // Refresh relevant queries
       queryClient.invalidateQueries({ queryKey: ["transactionsWithConfig"] });
       queryClient.invalidateQueries({ queryKey: ["walletOverview"] });
       queryClient.invalidateQueries({ queryKey: ["memberDetails"] });
-      
-      if (data.type === "payment_success") {
-        toast.success("Payment successful! Loan repayment processed.");
-      } else if (data.type === "payment_failed") {
+
+      // Show appropriate message based on payment status
+      if (data.payment_status === "PAID") {
+        toast.success("Payment successful! Your loan repayment has been processed.");
+      } else if (data.payment_status === "FAILED") {
         toast.error("Payment failed. Please try again.");
+      } else if (data.payment_status === "USER_DROPPED") {
+        toast.warning("Payment was cancelled. No charges were made.");
+      } else if (data.payment_status === "PENDING") {
+        toast.info("Payment is being processed. Please wait...");
       } else {
-        toast.info("Payment status updated.");
+        toast.info(`Payment status: ${data.payment_status}`);
       }
     },
-    
+
     onError: (error: any) => {
-      console.error("❌ Failed to process webhook:", error);
-      console.error("❌ Error details:", error.response?.data);
-      
+      console.error("❌ Failed to verify payment:", error);
+
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        "Failed to process payment notification";
+        "Failed to verify payment status";
       toast.error(message);
     },
+  });
+};
+
+// Check payment status (polling)
+export const useCheckPaymentStatus = (orderId: string | null, enabled: boolean = false) => {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: ["paymentStatus", orderId],
+    queryFn: async () => {
+      if (!orderId) throw new Error("No order ID provided");
+
+      const response = await get(`/payments/status/${orderId}`);
+      const data = response?.data || response;
+
+      // If payment is completed, invalidate queries
+      if (data?.status === "PAID" || data?.status === "FAILED") {
+        queryClient.invalidateQueries({ queryKey: ["transactionsWithConfig"] });
+        queryClient.invalidateQueries({ queryKey: ["walletOverview"] });
+        queryClient.invalidateQueries({ queryKey: ["memberDetails"] });
+      }
+
+      return data;
+    },
+    enabled: enabled && !!orderId,
+    refetchInterval: (query) => {
+      // Stop polling if payment is complete or failed
+      const status = query.state.data?.status;
+      if (status === "PAID" || status === "FAILED" || status === "CANCELLED") {
+        return false;
+      }
+      return 5000; // Poll every 5 seconds while pending
+    },
+    staleTime: 0,
   });
 };
 
@@ -739,52 +775,14 @@ export const useClimeLoan = () => {
   });
 };
 
-// Webhook handler for processing payment events
-export const useHandleWebhook = () => {
-  return useMutation({
-    mutationFn: async (webhookData: any) => {
-      console.log("🔄 Processing webhook data...", webhookData);
-      
-      const response = await post(`/payments/webhook`, webhookData);
-      
-      if (!response) throw new Error("No response from server");
-      
-      const data = response.data || response;
-      
-      console.log("📥 Webhook processed:", data);
-      
-      return data;
-    },
-    
-    onSuccess: (data: any) => {
-      console.log("✅ Webhook processed successfully:", data);
-      toast.success("Payment confirmed successfully!");
-    },
-    
-    onError: (error: any) => {
-      console.error("❌ Failed to process webhook:", error);
-      console.error("❌ Error details:", error.response?.data);
-      
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to process payment notification";
-      toast.error(message);
-    },
-  });
-};
+// NOTE: Webhooks are handled server-to-server by Cashfree calling our backend.
+// The frontend should use useVerifyPayment to check payment status after redirect.
 
-// Webhook handler utility (for processing webhook responses)
-export const handleWebhookResponse = (webhookData: any) => {
-  console.log("🔄 Processing webhook response:", webhookData);
-  
-  if (webhookData.status === "SUCCESS") {
-    toast.success("Payment successful!");
-  } else if (webhookData.status === "FAILED") {
-    toast.error("Payment failed. Please try again.");
-  } else {
-    toast.info("Payment status: " + webhookData.status);
-  }
-  
-  return webhookData;
+// Utility function to handle payment redirect URL parameters
+export const parsePaymentRedirectParams = (searchParams: URLSearchParams) => {
+  return {
+    payment_status: searchParams.get("payment_status") as PaymentStatus | null,
+    order_id: searchParams.get("order_id"),
+    member_id: searchParams.get("member_id"),
+  };
 };

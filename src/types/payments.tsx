@@ -27,8 +27,6 @@ export interface CreateOrderResponse {
     current_due_amount: number;
     repayment_amount: number;
     new_due_amount: number;
-    repayment_status: string;
-    original_loan_updated: boolean;
     original_loan_id: string;
   };
 }
@@ -38,8 +36,21 @@ export interface CashfreeCheckoutOptions {
   redirectTarget?: "_self" | "_blank";
 }
 
-// declare global {
-//   interface Window {
-//     Cashfree: any;
-//   }
-// }
+// Payment status types for URL query parameters
+export type PaymentStatus = "PAID" | "FAILED" | "USER_DROPPED" | "PENDING" | "CANCELLED";
+
+export interface PaymentRedirectParams {
+  payment_status: PaymentStatus;
+  order_id: string;
+  member_id: string;
+}
+
+// Verify payment response
+export interface VerifyPaymentResponse {
+  success: boolean;
+  message: string;
+  payment_status: PaymentStatus;
+  order_id: string;
+  amount?: number;
+  payment_time?: string;
+}
