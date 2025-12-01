@@ -47,7 +47,7 @@ const UserDashboard = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const [repaymentDialogOpen, setRepaymentDialogOpen] = useState(false);
-  const [selectedRepayAmount, setSelectedRepayAmount] = useState(1);
+  const [selectedRepayAmount, setSelectedRepayAmount] = useState(500);
   const [paymentProcessed, setPaymentProcessed] = useState(false);
 
   const memberId = TokenService.getMemberId();
@@ -813,11 +813,11 @@ const UserDashboard = () => {
                 },
               }}
             >
-              {[1, 500]
+              {[500]
                 .filter(amount => amount <= dueAmount)
                 .map((amount) => (
-                  <MenuItem
-                    key={amount}
+                  <MenuItem 
+                    key={amount} 
                     value={amount}
                     sx={{ fontWeight: amount === dueAmount ? 600 : 400 }}
                   >
