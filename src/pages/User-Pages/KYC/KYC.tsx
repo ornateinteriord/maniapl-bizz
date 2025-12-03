@@ -16,44 +16,52 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import BadgeIcon from '@mui/icons-material/Badge';
 import UserContext from '../../../context/user/userContext';
-import { useUpdateMember } from '../../../api/Memeber';
+// import { useUpdateMember } from '../../../api/Memeber';
 import { LoadingComponent } from '../../../App';
+import { useSubmitKYC } from '../../../api/Memeber';
 
 const KYC: React.FC = () => {
-    const { user } = useContext(UserContext);
+  const { user } = useContext(UserContext);
+
   const [formData, setFormData] = useState({
     accountName: '',
     account_number: '',
     ifsc_code: '',
     bank_name: '',
     Pan_no: '',
+    address: '',
   });
 
-  useEffect(()=>{
-    if(user){
+  useEffect(() => {
+    if (user) {
       setFormData({
         accountName: user?.Name ?? '',
         account_number: user?.account_number ?? '',
         ifsc_code: user?.ifsc_code ?? '',
         bank_name: user?.bank_name ?? '',
         Pan_no: user?.Pan_no ?? '',
-      })
+        address: user?.address ?? '',
+      });
     }
-  },[user])
+  }, [user]);
 
-  const updateMember = useUpdateMember();
+  const submitKYC = useSubmitKYC();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: any) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = () => {
-    updateMember.mutate(formData);
+    submitKYC.mutate({
+      ref_no: user.Member_id,
+      bankAccount: formData.account_number,
+      ifsc: formData.ifsc_code,
+      pan: formData.Pan_no,
+      address: formData.address,
+    });
   };
+
 
   return (
     <Card sx={{ margin: '2rem', mt: 10, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
@@ -216,7 +224,7 @@ const KYC: React.FC = () => {
               <Button
                 variant="contained"
                 onClick={handleSubmit}
-                disabled={updateMember.isPending}
+                disabled={submitKYC.isPending}
                 sx={{
                   backgroundColor: '#7e22ce',
                   alignSelf: 'flex-end',
@@ -231,7 +239,7 @@ const KYC: React.FC = () => {
           </AccordionDetails>
         </Accordion>
       </CardContent>
-      {updateMember.isPending && <LoadingComponent />}
+      {submitKYC.isPending && <LoadingComponent />}
     </Card>
   );
 };

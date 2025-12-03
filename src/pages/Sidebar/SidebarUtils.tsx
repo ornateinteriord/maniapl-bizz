@@ -252,6 +252,12 @@ export const AdminSideBarMenuItems: SideBarMenuItemType[] = [
     isExpandable: false,
   },
   {
+    name: "KYC Approval",
+    icon: <VerifiedUserIcon />,
+    path: "/admin/kyc-approval",
+    isExpandable: false,
+  },
+  {
     name: "Transactions",
     icon: <ShowChartIcon />,
     isExpandable: true,

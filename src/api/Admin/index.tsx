@@ -295,3 +295,33 @@ export const useUpdateRewardLoanStatus = () => {
     },
   });
 };
+
+// Add KYC approval hooks
+export const useGetKYCSubmissions = (status = "PENDING", q = "", page = 1, limit = 50) => {
+  return useQuery({
+    queryKey: ["kycSubmissions", status, q, page, limit],
+    queryFn: async () => {
+      const response = await get("/kyc/submissions", { status, q, page, limit });
+      return response;
+    },
+  });
+};
+
+export const useApproveKYC = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (ref_no: string) => {
+      const response = await post("/kyc/approve", { ref_no });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kycSubmissions"] });
+      toast.success("KYC approved successfully");
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || "Failed to approve KYC";
+      toast.error(errorMessage);
+    },
+  });
+};

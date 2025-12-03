@@ -773,3 +773,17 @@ export const parsePaymentRedirectParams = (searchParams: URLSearchParams) => {
     member_id: searchParams.get("member_id"),
   };
 };
+
+export const useSubmitKYC = () => {
+  return useMutation({
+    mutationFn: async (data: any) => {
+      return await post("/kyc/submit", data);
+    },
+    onSuccess: () => {
+      toast.success("KYC submitted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response.data.message);
+    },
+  });
+};
