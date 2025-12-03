@@ -23,6 +23,7 @@ import {
   UnusedPackages,
   UsedPackages,
 } from "./pages/Admin-Pages/Packages/Packages";
+import KYCApproval from "./pages/Admin-Pages/KYCApproval/KYCApproval";
 import Tree from "./pages/User-Pages/Team/Tree";
 import Team from "./pages/User-Pages/Team/Team";
 import ProtectedRoute from "./routeProtecter/RouteProtecter";
@@ -286,6 +287,7 @@ const RoutesProvider = ({
               <Route path="/admin/news" element={<AdminNews />} />
               <Route path="/admin/holidays" element={<AdminHolidays />} />
               <Route path="/admin/members/:memberId" element={<MembersUpdateForm />} />
+              <Route path="/admin/kyc-approval" element={<KYCApproval />} />
         
             </Route>
              <Route element={<ProtectedRoute allowedRoles={["ADMIN", "USER"]} />}>

@@ -1,3 +1,4 @@
+// ActivatePackage.tsx
 import React, { useState } from 'react';
 import {
   Box,
@@ -64,7 +65,7 @@ interface ActivationResponse {
   totalCommission?: number;
 }
 
-const ActivatePackage = () => {
+const ActivatePackage: React.FC = () => {
   // State management
   const [memberId, setMemberId] = useState<string>('');
   const [searchedMemberId, setSearchedMemberId] = useState<string>('');
@@ -74,7 +75,13 @@ const ActivatePackage = () => {
   const [commissionData, setCommissionData] = useState<CommissionData[]>([]);
   const [totalCommission, setTotalCommission] = useState<number>(0);
 
+  // Stable values to display in success dialog (prevent reset from wiping them)
+  const [activatedMember, setActivatedMember] = useState<any>(null);
+  const [activatedPackage, setActivatedPackage] = useState<string>('');
+
+  // API hooks
   const { data: selectedMember, isLoading: isSearching } = useGetMemberDetails(searchedMemberId);
+  // NOTE: your hook returned isPending earlier; keep same mapping
   const { mutate: activatePackage, isPending: isActivating } = useActivatePackage();
 
   // ✅ Added RD package
@@ -98,25 +105,38 @@ const ActivatePackage = () => {
       {
         onSuccess: (response: ActivationResponse) => {
           if (response.success) {
+            // CLOSE confirmation
             setShowConfirmDialog(false);
-            
-            // Extract commission data from response
+
+            // SAVE stable values for success dialog BEFORE resetting form
+            setActivatedMember(selectedMember);
+            setActivatedPackage(selectedPackage);
+
+            // Extract commission data from response (various shapes supported)
             const commissions = response.data?.commissions || response.commissions || [];
             const total = response.data?.totalCommission || response.totalCommission || 0;
-            
+
             setCommissionData(commissions);
             setTotalCommission(total);
-            
-            // Show success dialog with commission details
+
+            // Show success dialog
             setShowSuccessDialog(true);
-            
-            // Reset form after a delay
-            setTimeout(() => {
-              setMemberId('');
-              setSearchedMemberId('');
-              setSelectedPackage('');
-            }, 100);
+
+            // Reset form fields (these are the editable inputs). We DO NOT clear activatedMember / activatedPackage.
+            setMemberId('');
+            setSearchedMemberId('');
+            setSelectedPackage('');
+          } else {
+            // Optionally handle a failed response shape
+            // e.g. show toast or error dialog (not implemented here)
+            setShowConfirmDialog(false);
           }
+        },
+        onError: (_err: any) => {
+          // Handle network / server error (you can show a toast here)
+          // Keep confirm dialog closed
+          setShowConfirmDialog(false);
+          // Optionally reset nothing so user can retry
         },
       }
     );
@@ -366,7 +386,7 @@ const ActivatePackage = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Are you sure you want to activate the{' '}
             <strong>
-              {selectedPackage === 'standard' ? 'Standard ₹2600' : 'RD ₹1000'}
+              {packageOptions.find(pkg => pkg.value === selectedPackage)?.label || 'No package selected'}
             </strong>{' '}
             package for this member?
           </Typography>
@@ -396,7 +416,14 @@ const ActivatePackage = () => {
       {/* Success Dialog with Commission Details */}
       <Dialog
         open={showSuccessDialog}
-        onClose={() => setShowSuccessDialog(false)}
+        onClose={() => {
+          // Close and clear stable activated values and commission data
+          setShowSuccessDialog(false);
+          setActivatedMember(null);
+          setActivatedPackage('');
+          setCommissionData([]);
+          setTotalCommission(0);
+        }}
         maxWidth="md"
         fullWidth
         PaperProps={{
@@ -410,10 +437,11 @@ const ActivatePackage = () => {
         <DialogContent>
           <Box sx={{ mb: 3 }}>
             <Typography variant="body1" fontWeight="medium" gutterBottom>
-              Member: {selectedMember?.Name} ({selectedMember?.Member_id})
+              {/* USE the STABLE activatedMember & activatedPackage so dialog doesn't show cleared values */}
+              Member: {activatedMember?.Name || 'N/A'} ({activatedMember?.Member_id || 'N/A'})
             </Typography>
             <Typography variant="body1" fontWeight="medium" gutterBottom>
-              Package: {selectedPackage === 'standard' ? 'Standard Package (₹2600)' : 'RD Package (₹1000)'}
+              Package: {packageOptions.find(pkg => pkg.value === activatedPackage)?.label || 'N/A'}
             </Typography>
           </Box>
 
@@ -458,7 +486,7 @@ const ActivatePackage = () => {
                             />
                           </TableCell>
                           <TableCell align="right" sx={{ fontWeight: 'medium', color: 'success.main' }}>
-                            ₹{commission.amount?.toFixed(2) || '0.00'}
+                            {typeof commission.amount === 'number' ? `₹${commission.amount.toFixed(2)}` : '₹0.00'}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -511,6 +539,8 @@ const ActivatePackage = () => {
           <Button
             onClick={() => {
               setShowSuccessDialog(false);
+              setActivatedMember(null);
+              setActivatedPackage('');
               setCommissionData([]);
               setTotalCommission(0);
             }}
