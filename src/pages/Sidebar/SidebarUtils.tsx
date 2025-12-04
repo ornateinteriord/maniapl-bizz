@@ -136,6 +136,11 @@ export const AdminSideBarMenuItems: SideBarMenuItemType[] = [
         path: "/admin/members/inactive",
         icon: <PersonIcon />,
       },
+      {
+        name: "KYC Approval",
+        path: "/admin/kyc-approval",
+        icon: <VerifiedUserIcon />,
+      },
     ],
   },
    {
@@ -252,9 +257,9 @@ export const AdminSideBarMenuItems: SideBarMenuItemType[] = [
     isExpandable: false,
   },
   {
-    name: "KYC Approval",
-    icon: <VerifiedUserIcon />,
-    path: "/admin/kyc-approval",
+    name: "Withdraw Requests",
+    icon: <Pending />,
+    path: "/admin/withdraw-pending",
     isExpandable: false,
   },
   {
