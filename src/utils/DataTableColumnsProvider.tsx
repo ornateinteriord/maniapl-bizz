@@ -1096,6 +1096,69 @@ export const getPendingLoansColumns = (processLoan: (memberId: string, action: '
   },
 ];
 
+// Columns for Withdraw Pending table (Admin)
+// Hard-coded columns and styling to match dashboard tables
+export const getWithdrawPendingColumns = (onRepay: (transaction: any) => void) => [
+  {
+    name: 'Date',
+    selector: (row: any) => getFormattedDate(row.transaction_date) || '-',
+    sortable: true,
+  },
+  {
+    name: 'Member',
+    selector: (row: any) => row.member_id || '-',
+    sortable: true,
+  },
+  {
+    name: 'Mobile No.',
+    selector: (row: any) => row.memberDetails?.mobileno || '-',
+    sortable: true,
+  },
+  {
+    name: 'Account No.',
+    selector: (row: any) => row.memberDetails?.account_number || '-',
+    sortable: true,
+  },
+  {
+    name: 'IFSC',
+    selector: (row: any) => row.memberDetails?.ifsc_code || '-',
+    sortable: true,
+  },
+  {
+    name: 'Paid Amount',
+    selector: (row: any) => row.ew_debit || '-',
+    sortable: true,
+    cell: (row: any) => row.ew_debit ? `₹${Number(row.net_amount).toLocaleString()}` : '-',
+  },
+  {
+    name: 'Deducted',
+    selector: (row: any) => row.deduction || 0,
+    sortable: true,
+    cell: (row: any) => `₹${Number(row.deduction || 0).toLocaleString()}`,
+  },
+  {
+    name: 'Status',
+    selector: (row: any) => row.status || '-',
+    sortable: true,
+  },
+  {
+    name: 'Action',
+    cell: (row: any) => (
+      <div>
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={() => onRepay(row)}
+        >
+          Repay
+        </Button>
+      </div>
+    ),
+    sortable: false,
+  },
+];
+
 export const getProcessedLoansColumns = () => [
   {
     name: "Date",

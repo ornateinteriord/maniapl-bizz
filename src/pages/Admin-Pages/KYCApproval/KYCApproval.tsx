@@ -20,10 +20,10 @@ import {
   Snackbar,
   Alert
 } from '@mui/material';
-import {  useQueryClient } from '@tanstack/react-query';
-
+import { useQueryClient } from '@tanstack/react-query';
 import { useApproveKYC, useGetKYCSubmissions } from '../../../api/Admin';
 
+// Updated Type
 interface KYCSubmission {
   _id: string;
   Member_id: string;
@@ -34,7 +34,7 @@ interface KYCSubmission {
   ifsc_code: string;
   bank_name: string;
   Pan_no: string;
-  kycStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  kycStatus: 'PROCESSING' | 'APPROVED' | 'REJECTED';
   beneficiaryStatus: string;
   beneficiaryId: string;
   address: string;
@@ -80,7 +80,6 @@ const KYCApproval: React.FC = () => {
   };
 
   const handleReject = () => {
-    // For now, we'll just close the dialog since rejection isn't implemented in the backend
     setOpenDialog(false);
     setSnackbar({
       open: true,
@@ -89,34 +88,15 @@ const KYCApproval: React.FC = () => {
     });
   };
 
+  // Updated Status Chip Color
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'success';
       case 'rejected': return 'error';
-      case 'pending': return 'warning';
+      case 'processing': return 'warning';
       default: return 'default';
     }
   };
-
-//   if (isLoading) {
-//     return (
-//       <Card sx={{ margin: '2rem', mt: 10 }}>
-//         <CardContent>
-//           <Typography>Loading KYC submissions...</Typography>
-//         </CardContent>
-//       </Card>
-//     );
-//   }
-
-//   if (isError) {
-//     return (
-//       <Card sx={{ margin: '2rem', mt: 10 }}>
-//         <CardContent>
-//           <Typography color="error">Error loading KYC submissions</Typography>
-//         </CardContent>
-//       </Card>
-//     );
-//   }
 
   return (
     <Card sx={{ margin: '2rem', mt: 10, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
@@ -152,7 +132,7 @@ const KYCApproval: React.FC = () => {
                   <TableCell>
                     <Chip 
                       label={submission.kycStatus ? submission.kycStatus.charAt(0).toUpperCase() + submission.kycStatus.slice(1).toLowerCase() : 'Unknown'} 
-                      color={getStatusColor(submission.kycStatus?.toLowerCase() || 'pending') as any}
+                      color={getStatusColor(submission.kycStatus?.toLowerCase() || 'processing') as any}
                       size="small"
                     />
                   </TableCell>
@@ -172,7 +152,7 @@ const KYCApproval: React.FC = () => {
                         setSelectedKYC(submission);
                         setOpenDialog(true);
                       }}
-                      disabled={submission.kycStatus !== 'PENDING'}
+                      disabled={submission.kycStatus !== 'PROCESSING'}
                     >
                       View Details
                     </Button>
@@ -190,7 +170,7 @@ const KYCApproval: React.FC = () => {
         )}
       </CardContent>
 
-      {/* KYC Detail Dialog */}
+      {/* Details Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>KYC Submission Details</DialogTitle>
         <DialogContent>
@@ -214,7 +194,7 @@ const KYCApproval: React.FC = () => {
                   <Typography variant="body2" color="textSecondary">Status</Typography>
                   <Chip 
                     label={selectedKYC?.kycStatus ? selectedKYC.kycStatus.charAt(0).toUpperCase() + selectedKYC.kycStatus.slice(1).toLowerCase() : 'Unknown'} 
-                    color={getStatusColor(selectedKYC?.kycStatus?.toLowerCase() || 'pending') as any}
+                    color={getStatusColor(selectedKYC?.kycStatus?.toLowerCase() || 'processing') as any}
                     size="small"
                   />
                 </Box>
@@ -248,7 +228,7 @@ const KYCApproval: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          {selectedKYC && selectedKYC.kycStatus === 'PENDING' && (
+          {selectedKYC && selectedKYC.kycStatus === 'PROCESSING' && (
             <>
               <Button 
                 onClick={handleReject}
@@ -273,7 +253,7 @@ const KYCApproval: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
+      {/* Snackbar */}
       <Snackbar 
         open={snackbar.open} 
         autoHideDuration={6000} 
