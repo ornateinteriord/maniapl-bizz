@@ -21,12 +21,13 @@ import {
 } from '@mui/material';
 import DataTable from 'react-data-table-component';
 import { DASHBOARD_CUTSOM_STYLE, getWithdrawPendingColumns } from '../../../utils/DataTableColumnsProvider';
-import { useGetPendingWithdrawals, useApproveWithdrawal } from '../../../api/Memeber';
+import { useGetPendingWithdrawals, useApproveWithdrawal, useCreatePaymentOrder } from '../../../api/Memeber';
 import { toast } from 'react-toastify';
 
 const WithdrawPending: React.FC = () => {
   const { data: pending = [], isFetching } = useGetPendingWithdrawals();
-  const { mutate: approveTransaction, isPending } = useApproveWithdrawal();
+  const {  isPending: isApproving } = useApproveWithdrawal();
+  const { mutate: createPaymentOrder, isPending: isCreatingOrder } = useCreatePaymentOrder();
   const [repayDialogOpen, setRepayDialogOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
   const [repayAmount, setRepayAmount] = useState<number>(500);
@@ -74,25 +75,42 @@ const WithdrawPending: React.FC = () => {
     const finalAmount = getFinalRepayAmount();
 
     if (finalAmount <= 0) {
-      toast.error('Please enter a valid repayment amount');
+      toast.error('Please enter a valid payment amount');
       return;
     }
 
     // Optional: ensure not greater than requested amount
     const due = Number(selectedTx?.ew_debit || 0);
     if (finalAmount > due) {
-      toast.error(`Repayment exceeds requested amount ₹${due}`);
+      toast.error(`Payment exceeds requested amount ₹${due}`);
       return;
     }
 
-    approveTransaction(selectedTx.transaction_id, {
-      onSuccess: (res: any) => {
-        toast.success(res.message || 'Repayment processed');
+    // Create Cashfree payment order instead of manual approval
+    const paymentData = {
+      amount: finalAmount,
+      currency: "INR",
+      customer: {
+        customer_id: selectedTx.member_id,
+        customer_email: selectedTx.memberDetails?.email || "",
+        customer_phone: selectedTx.memberDetails?.mobileno || "",
+        customer_name: selectedTx.memberDetails?.Name || ""
+      },
+      notes: {
+        transaction_id: selectedTx.transaction_id,
+        isWithdrawal: true,
+        withdrawalAmount: finalAmount
+      }
+    };
+
+    createPaymentOrder(paymentData, {
+      onSuccess: () => {
+        // Payment order created successfully, Cashfree checkout will be initialized
         setRepayDialogOpen(false);
         setSelectedTx(null);
       },
       onError: (err: any) => {
-        toast.error(err.response?.data?.message || err.message || 'Failed to process repayment');
+        toast.error(err.response?.data?.message || err.message || 'Failed to initiate payment');
         setRepayDialogOpen(false);
         setSelectedTx(null);
       }
@@ -131,7 +149,7 @@ const WithdrawPending: React.FC = () => {
               pagination
               customStyles={DASHBOARD_CUTSOM_STYLE}
               paginationPerPage={25}
-              progressPending={isFetching || isPending}
+              progressPending={isFetching || isApproving || isCreatingOrder}
               paginationRowsPerPageOptions={[25, 50, 100]}
               highlightOnHover
               noDataComponent={<div>No withdrawal requests found</div>}
@@ -143,7 +161,7 @@ const WithdrawPending: React.FC = () => {
       {/* Repayment Dialog: styled to match LoansList */}
       <Dialog
         open={repayDialogOpen}
-        onClose={() => !isPending && setRepayDialogOpen(false)}
+        onClose={() => {!isApproving && !isCreatingOrder && setRepayDialogOpen(false)}}
         PaperProps={{
           sx: {
             borderRadius: 3,
@@ -163,7 +181,7 @@ const WithdrawPending: React.FC = () => {
             pb: 1,
           }}
         >
-          Repayment
+          payment
         </DialogTitle>
 
         <DialogContent>
@@ -190,7 +208,7 @@ const WithdrawPending: React.FC = () => {
                 border: '1px solid #e2e8f0'
               }}>
                 <Typography sx={{ color: '#64748b' }}>Requested Amount</Typography>
-                <Typography sx={{ fontWeight: 600 }}>₹{Number(selectedTx?.ew_debit || 0).toFixed(2)}</Typography>
+                <Typography sx={{ fontWeight: 600 }}>₹{Number(selectedTx?.net_amount || 0).toFixed(2)}</Typography>
               </Box>
 
               <Box sx={{
@@ -252,7 +270,7 @@ const WithdrawPending: React.FC = () => {
           <Button
             onClick={() => setRepayDialogOpen(false)}
             variant="outlined"
-            disabled={isPending}
+            disabled={isApproving || isCreatingOrder}
             sx={{
               borderColor: '#d1d5db',
               color: '#6b7280',
@@ -268,7 +286,7 @@ const WithdrawPending: React.FC = () => {
           <Button
             onClick={handleConfirmRepay}
             variant="contained"
-            disabled={getFinalRepayAmount() === 0 || isPending}
+            disabled={getFinalRepayAmount() === 0 || isApproving || isCreatingOrder}
             sx={{
               background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
               '&:hover': { background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)' },
@@ -278,7 +296,7 @@ const WithdrawPending: React.FC = () => {
               px: 3,
             }}
           >
-            {isPending ? <CircularProgress size={18} color="inherit" /> : 'Confirm Repayment'}
+            {isApproving || isCreatingOrder ? <CircularProgress size={18} color="inherit" /> : 'Confirm Payment'}
           </Button>
         </DialogActions>
       </Dialog>
