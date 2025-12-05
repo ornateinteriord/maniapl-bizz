@@ -1149,14 +1149,32 @@ export const getWithdrawPendingColumns = (onRepay: (transaction: any) => void) =
           variant="contained"
           color="primary"
           size="small"
+          sx={{ textTransform: 'capitalize' }}
           onClick={() => onRepay(row)}
         >
-          Repay
+          pay online
         </Button>
       </div>
     ),
     sortable: false,
   },
+  //  {
+  //   name: 'Action',
+  //   cell: (row: any) => (
+  //     <div>
+  //       <Button
+  //         variant="contained"
+  //         color="primary"
+  //         size="small"
+  //         sx={{ textTransform: 'capitalize' }}
+  //         onClick={() => onRepay(row)}
+  //       >
+  //         pay online
+  //       </Button>
+  //     </div>
+  //   ),
+  //   sortable: false,
+  // },
 ];
 
 export const getProcessedLoansColumns = () => [
