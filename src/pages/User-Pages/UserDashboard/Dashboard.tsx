@@ -107,7 +107,7 @@ const UserDashboard = () => {
 // Find the last completed repayment
 const lastCompletedRepayment = Array.isArray(allTransactions)
   ? allTransactions
-      .filter((t: any) => t.is_loan_repayment && t.repayment_status === "Unpaid")
+      .filter((t: any) => t.is_loan_repayment && t.repayment_status === "Completed")
       .sort((a: any, b: any) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime())[0]
   : null;
 
