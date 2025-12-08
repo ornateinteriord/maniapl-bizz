@@ -104,7 +104,20 @@ const UserDashboard = () => {
   const isLoanApproved = !!approvedLoan;
     
   const initialLoanAmount = approvedLoan?.ew_credit ? parseFloat(approvedLoan.ew_credit) : 0; 
-  const dueAmount = approvedLoan?.net_amount ? parseFloat(approvedLoan.net_amount) : initialLoanAmount;
+// Find the last completed repayment
+const lastCompletedRepayment = Array.isArray(allTransactions)
+  ? allTransactions
+      .filter((t: any) => t.is_loan_repayment && t.repayment_status === "Completed")
+      .sort((a: any, b: any) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime())[0]
+  : null;
+
+// Now update dueAmount
+const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
+  ? parseFloat(lastCompletedRepayment.repayment_context.new_due_amount)
+  : approvedLoan?.net_amount
+  ? parseFloat(approvedLoan.net_amount)
+  : initialLoanAmount;
+
 
   // Find the first transaction with Processing or Approved status
   const processingOrApprovedTransaction = Array.isArray(allTransactions) 
