@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
-import { LoadingComponent } from "../../App";
 import { useLoginMutation } from "../../api/Auth";
 
 const Login = () => {
@@ -42,60 +41,81 @@ const Login = () => {
       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
         <Card sx={{ width: "100%", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", backgroundColor: "#fff" }}>
           <CardContent sx={{ padding: "2rem" }}>
-            <Typography component="h1" variant="h5" sx={{ color: "#7e22ce", mb: 3, textAlign: "center" }}>
+            <Typography component="h1" variant="h5" sx={{ color: "#2c8786", mb: 3, textAlign: "center" }}>
               Sign In
             </Typography>
             <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               <TextField
                 required
+                fullWidth
                 id="username"
                 label="Username"
                 name="username"
                 autoComplete="username"
                 autoFocus
-                placeholder="Enter your username"
                 value={formData.username}
                 onChange={handleChange}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonIcon sx={{ color: "#7e22ce" }} />
+                      <PersonIcon />
                     </InputAdornment>
                   ),
                 }}
               />
               <TextField
                 required
+                fullWidth
                 name="password"
                 label="Password"
                 type="password"
                 id="password"
                 autoComplete="current-password"
-                placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockIcon sx={{ color: "#7e22ce" }} />
+                      <LockIcon />
                     </InputAdornment>
                   ),
                 }}
               />
-              <Button type="submit" fullWidth variant="contained" disabled={isPending} sx={{ backgroundColor: "#7e22ce", "&:hover": { backgroundColor: "#581c87" } }}>
-                Sign In
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={isPending}
+                sx={{ 
+                  backgroundColor: '#2c8786',
+                  '&:hover': {
+                    backgroundColor: '#236d6c',
+                  },
+                  mt: 3, 
+                  mb: 2,
+                  py: 1.5,
+                  fontWeight: 'bold'
+                }}
+              >
+                {isPending ? "Signing in..." : "Sign In"}
               </Button>
-              <Typography variant="body2" sx={{ textAlign: "center", mt: 1 }}>
-                Don't have an account?{" "}
-                <Link to="/register" style={{ color: "#7e22ce", textDecoration: "none", fontWeight: "bold" }}>
-                  Register
+              <Box sx={{ textAlign: "center" }}>
+                <Link to="/recover-password" style={{ color: "#2c8786", textDecoration: "none" }}>
+                  Forgot password?
                 </Link>
-              </Typography>
+              </Box>
+              <Box sx={{ textAlign: "center", mt: 2 }}>
+                <Typography variant="body2">
+                  Don't have an account?{" "}
+                  <Link to="/register" style={{ color: "#2c8786", textDecoration: "none", fontWeight: "bold" }}>
+                    Sign Up
+                  </Link>
+                </Typography>
+              </Box>
             </Box>
           </CardContent>
         </Card>
       </Box>
-      {isPending && <LoadingComponent />}
     </Container>
   );
 };

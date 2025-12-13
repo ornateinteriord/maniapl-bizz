@@ -99,7 +99,7 @@ const ResetPassword = () => {
             <Typography
               component="h1"
               variant="h5"
-              sx={{ color: "#7e22ce", mb: 3, textAlign: "center" }}
+              sx={{ color: "#2c8786", mb: 3, textAlign: "center" }}
             >
               Reset Password
             </Typography>
@@ -122,17 +122,17 @@ const ResetPassword = () => {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <EmailIcon sx={{ color: "#7e22ce" }} />
+                        <EmailIcon sx={{ color: "#2c8786" }} />
                       </InputAdornment>
                     ),
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       "&:hover fieldset": {
-                        borderColor: "#7e22ce",
+                        borderColor: "#2c8786",
                       },
                       "&.Mui-focused fieldset": {
-                        borderColor: "#7e22ce",
+                        borderColor: "#2c8786",
                       },
                     },
                   }}
@@ -153,10 +153,10 @@ const ResetPassword = () => {
                       textAlign: "center",
                       "& .MuiInputBase-root": {
                         "&:hover fieldset": {
-                          borderColor: "#7e22ce",
+                          borderColor: "#2c8786",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7e22ce",
+                          borderColor: "#2c8786",
                         },
                       },
                     },
@@ -178,17 +178,17 @@ const ResetPassword = () => {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockIcon sx={{ color: "#7e22ce" }} />
+                          <LockIcon sx={{ color: "#2c8786" }} />
                         </InputAdornment>
                       ),
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "&:hover fieldset": {
-                          borderColor: "#7e22ce",
+                          borderColor: "#2c8786",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7e22ce",
+                          borderColor: "#2c8786",
                         },
                       },
                     }}
@@ -209,17 +209,17 @@ const ResetPassword = () => {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockIcon sx={{ color: "#7e22ce" }} />
+                          <LockIcon sx={{ color: "#2c8786" }} />
                         </InputAdornment>
                       ),
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "&:hover fieldset": {
-                          borderColor: "#7e22ce",
+                          borderColor: "#2c8786",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7e22ce",
+                          borderColor: "#2c8786",
                         },
                       },
                     }}
@@ -231,7 +231,7 @@ const ResetPassword = () => {
                 fullWidth
                 variant="contained"
                 sx={{
-                  backgroundColor: "#7e22ce",
+                  backgroundColor: "#2c8786",
                   "&:hover": { backgroundColor: "#581c87" },
                 }}
               >

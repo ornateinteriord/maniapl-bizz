@@ -32,7 +32,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
         <AccordionSummary
           expandIcon={<ExpandMoreIcon sx={{ color: "#fff" }} />}
           sx={{
-            backgroundColor: "#7e22ce",
+            backgroundColor: "#2c8786",
             color: "#fff",
           }}
         >
@@ -59,7 +59,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <AccountCircleIcon sx={{ color: "#7e22ce" }} />
+                      <AccountCircleIcon sx={{ color: "#2c8786" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -75,7 +75,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <AccountBalanceIcon sx={{ color: "#7e22ce" }} />
+                      <AccountBalanceIcon sx={{ color: "#2c8786" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -91,7 +91,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <AccountBalanceIcon sx={{ color: "#7e22ce" }} />
+                      <AccountBalanceIcon sx={{ color: "#2c8786" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -107,7 +107,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <AccountBalanceIcon sx={{ color: "#7e22ce" }} />
+                      <AccountBalanceIcon sx={{ color: "#2c8786" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -125,7 +125,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LocationOnIcon sx={{ color: "#7e22ce" }} />
+                      <LocationOnIcon sx={{ color: "#2c8786" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -141,7 +141,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <CreditCardIcon sx={{ color: "#7e22ce" }} />
+                      <CreditCardIcon sx={{ color: "#2c8786" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -166,7 +166,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PaymentIcon sx={{ color: "#7e22ce" }} />
+                      <PaymentIcon sx={{ color: "#2c8786" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -182,7 +182,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PaymentIcon sx={{ color: "#7e22ce" }} />
+                      <PaymentIcon sx={{ color: "#2c8786" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -198,7 +198,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PaymentIcon sx={{ color: "#7e22ce" }} />
+                      <PaymentIcon sx={{ color: "#2c8786" }} />
                     </InputAdornment>
                   ),
                 }}

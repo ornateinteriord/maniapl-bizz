@@ -175,7 +175,7 @@ const WithdrawPending: React.FC = () => {
         <DialogTitle
           sx={{
             textAlign: 'center',
-            color: '#7e22ce',
+            color: '#2c8786',
             fontWeight: 'bold',
             fontSize: '1.5rem',
             pb: 1,
@@ -288,7 +288,7 @@ const WithdrawPending: React.FC = () => {
             variant="contained"
             disabled={getFinalRepayAmount() === 0 || isApproving || isCreatingOrder}
             sx={{
-              background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
+              background: 'linear-gradient(135deg, #2c8786 0%, #a855f7 100%)',
               '&:hover': { background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)' },
               textTransform: 'capitalize',
               fontWeight: 600,

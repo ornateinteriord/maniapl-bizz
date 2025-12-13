@@ -40,8 +40,8 @@ const DateFilterComponent = ({
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}
-          style={{ border: "1px solid black", width }}
-          className={cn("justify-start text-left font-normal", !date && "text-muted-foreground")}
+          style={{ border: "1px solid #ccc", width }}
+          className={cn("justify-start text-left font-normal", !date && "text-gray-500")}
         >
           <CalendarIcon />
           {date ? format(date as Date, "PPP") : <span>Pick a date</span>}
@@ -93,10 +93,10 @@ export const MuiDatePicker: React.FC<Props> = ({ date, setDate, label }) => {
             size: "small",
             sx: {
               "& label": {
-                color: "#7e22ce",
+                color: "#2c8786",
               },
               "& label.Mui-focused": {
-                color: "#7e22ce",
+                color: "#2c8786",
               },
             },
           },

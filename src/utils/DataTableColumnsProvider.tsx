@@ -512,7 +512,7 @@ export const getSupportTicketColumns = (handleOpenDialog : any) =>  [
         variant="contained"
         onClick={() => handleOpenDialog(row)}
         sx={{
-          backgroundColor: '#7e22ce',
+          backgroundColor: '#2c8786',
           '&:hover': { backgroundColor: '#581c87' }
         }}
       >
@@ -615,7 +615,7 @@ export const getMailBoxColumns = (handleOpenDialog : any) => [
         onClick={() => handleOpenDialog(row)}
         size="medium"
         sx={{
-          color: '#7e22ce',
+          color: '#2c8786',
           '&:hover': {
             backgroundColor: 'rgba(4, 17, 47, 0.04)'
           }
@@ -1020,7 +1020,7 @@ export const DASHBOARD_CUTSOM_STYLE = {
     style: {
       fontSize: "16px",
       fontWeight: "Bogle-Bold",
-      backgroundColor: "#7e22ce",
+      backgroundColor: "#2c8786",
       color: "#fff",
       border: "none",
     },
@@ -1258,7 +1258,7 @@ export const getLoansListColumns = (onRepayClick: (row: any) => void) => [
       <button
         onClick={() => onRepayClick(row)}
         style={{
-          background: "#7e22ce",
+          background: "#2c8786",
           color: "white",
           padding: "5px 12px",
           border: "none",

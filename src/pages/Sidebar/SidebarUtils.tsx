@@ -26,82 +26,82 @@ import { AccountBalance, CardMembershipRounded, Pending } from "@mui/icons-mater
 
 export const UserSideBarMenuItems: SideBarMenuItemType[] = [
   {
-    name: "Dashboard",
+    name: "My Dashboard",
     icon: <DashboardIcon />,
     path: "/user/dashboard",
     isExpandable: false,
   },
   {
-    name: "Account Info",
+    name: "Account Settings",
     icon: <AccountCircleIcon />,
     isExpandable: true,
     subItems: [
-      { name: "Profile", path: "/user/account/profile", icon: <PersonIcon /> },
-      { name: "KYC", path: "/user/account/kyc", icon: <VerifiedUserIcon /> },
+      { name: "My Profile", path: "/user/account/profile", icon: <PersonIcon /> },
+      { name: "KYC Verification", path: "/user/account/kyc", icon: <VerifiedUserIcon /> },
       {
-        name: "Change Password",
+        name: "Update Password",
         path: "/user/account/change-password",
         icon: <LockIcon />,
       },
     ],
   },
   {
-    name: "Team",
+    name: "My Team",
     icon: <GroupIcon />,
     isExpandable: true,
     subItems: [
-      { name: "Direct", path: "/user/team/direct", icon: <PeopleIcon /> },
-      { name: "Team", path: "/user/team", icon: <GroupIcon /> },
-      { name: "Tree", path: "/user/team/tree", icon: <AccountTreeIcon /> },
+      { name: "Direct Referrals", path: "/user/team/direct", icon: <PeopleIcon /> },
+      { name: "Team View", path: "/user/team", icon: <GroupIcon /> },
+      { name: "Team Tree", path: "/user/team/tree", icon: <AccountTreeIcon /> },
       {
-        name: "New Register",
+        name: "New Registration",
         path: "/user/team/new-register",
         icon: <PersonAddIcon />,
       },
     ],
   },
   {
-    name: "Earnings",
+    name: "My Earnings",
     icon: <MonetizationOnIcon />,
     isExpandable: true,
     subItems: [
       {
-        name: "Level Benefits",
+        name: "Level Income",
         path: "/user/earnings/level-benefits",
         icon: <TrendingUpIcon />,
       },
       {
-        name: "Daily Payout",
+        name: "Daily Payouts",
         path: "/user/earnings/daily-payout",
         icon: <PaymentsIcon />,
       },
     ],
   },
  {
-    name: "Transactions",
+    name: "My Transactions",
     icon: <ShowChartIcon />,
     isExpandable: true,
     subItems: [
       {
-        name: "Wallet",
+        name: "Wallet History",
         path: "/user/transactions",
         icon: <CreditCardIcon />,
       },
       {
-        name: "Loan",
+        name: "Loan Details",
         path: "/user/loantransactions",
         icon: <AccountBalance />,
       },
     ],
   },
   {
-    name: "Wallet Balance",
+    name: "Wallet Summary",
     icon: <CreditCardIcon />,
     path: "/user/wallet",
     isExpandable: false,
   },
   {
-    name: "Mail Box",
+    name: "My Messages",
     icon: <MailOutlineIcon />,
     path: "/user/mailbox",
     isExpandable: false,
@@ -110,126 +110,91 @@ export const UserSideBarMenuItems: SideBarMenuItemType[] = [
 
 export const AdminSideBarMenuItems: SideBarMenuItemType[] = [
   {
-    name: "Dashboard",
+    name: "Admin Dashboard",
     icon: <DashboardIcon />,
     path: "/admin/dashboard",
     isExpandable: false,
   },
   {
-    name: "Members",
+    name: "Member Management",
     icon: <GroupIcon />,
     isExpandable: true,
     subItems: [
-      { name: "Members", path: "/admin/members", icon: <PeopleIcon /> },
+      { name: "All Members", path: "/admin/members", icon: <PeopleIcon /> },
       {
-        name: "Pending Members",
+        name: "Pending Approvals",
         path: "/admin/members/pending",
         icon: <PersonAddIcon />,
       },
       {
-        name: "Active Members",
+        name: "Active Users",
         path: "/admin/members/active",
         icon: <CheckCircleIcon />,
       },
       {
-        name: "Inactive Members",
+        name: "Inactive Users",
         path: "/admin/members/inactive",
         icon: <PersonIcon />,
       },
       {
-        name: "KYC Approval",
+        name: "KYC Review",
         path: "/admin/kyc-approval",
         icon: <VerifiedUserIcon />,
       },
     ],
   },
    {
-    name: "Activate", 
+    name: "Activation Center", 
     icon: <DashboardIcon />,
     isExpandable: true, 
     subItems: [
       {
-        name: "Activate",
+        name: "User Activation",
         icon: <CheckCircle2Icon />,
         path: "/admin/Activate",
-        
       },
       {
-        name: "Activate Package",
+        name: "Package Activation",
         icon: <PackageIcon />,
         path: "/admin/ActivatePackage",
-       
       },
     ],
   },
-  //   name: "Package",
-  //   icon: <InventoryIcon />,
-  //   isExpandable: true,
-  //   subItems: [
-  //     {
-  //       name: "Generate Package",
-  //       path: "/admin/package/generate",
-  //       icon: <RequestQuoteIcon />,
-  //     },
-  //     {
-  //       name: "Package Request",
-  //       path: "/admin/package/requests",
-  //       icon: <ReceiptLongIcon />,
-  //     },
-  //     {
-  //       name: "Used Package",
-  //       path: "/admin/package/used",
-  //       icon: <InventoryIcon />,
-  //     },
-  //     {
-  //       name: "Unused Package",
-  //       path: "/admin/package/unused",
-  //       icon: <InventoryIcon />,
-  //     },
-  //     {
-  //       name: "Package History",
-  //       path: "/admin/package/history",
-  //       icon: <HistoryIcon />,
-  //     },
-  //   ],
- 
   {
-    name: "Incomes",
+    name: "Income Management",
     icon: <MonetizationOnIcon />,
     isExpandable: true,
     subItems: [
       {
-        name: "Cash Back",
+        name: "Cash Rewards",
         path: "/admin/income/cashback",
         icon: <PaymentsIcon />,
       },
       {
-        name: "Level Benefits",
+        name: "Level Commissions",
         path: "/admin/income/level-benefits",
         icon: <TrendingUpIcon />,
       },
       {
-        name: "Daily Benefits Payouts",
+        name: "Daily Payout Records",
         path: "/admin/income/daily-payouts",
         icon: <PaymentsIcon />,
       },
     ],
   },
 
-  
-
 {
-  name: "Loans",
+  name: "Loan Services",
   icon: <CreditCardIcon />,
   isExpandable: true,
   subItems: [
     { 
-      name: "Loan Pending", 
+      name: "Pending Applications", 
       path: "/admin/member/pending", 
       icon: <Pending/> 
     },
     { 
-      name: " Loan Processed", 
+      name: "Processed Loans", 
       path: "/admin/member/processed", 
       icon: <CardMembershipRounded /> 
     },
@@ -237,12 +202,12 @@ export const AdminSideBarMenuItems: SideBarMenuItemType[] = [
   ],
 },
 {
-  name: "Repayments",
+  name: "Repayment Tracking",
   icon: <PaymentsIcon />,
   isExpandable: true,
   subItems: [
     { 
-      name: "Repayments List", 
+      name: "Repayment Records", 
       path: "/admin/repayments/list", 
       icon: <PaymentsIcon /> 
     },
@@ -251,48 +216,48 @@ export const AdminSideBarMenuItems: SideBarMenuItemType[] = [
 
 
   {
-    name: "Payout",
+    name: "Payout Processing",
     icon: <CreditCardIcon />,
     path: "/admin/payout",
     isExpandable: false,
   },
   {
-    name: "Withdraw Requests",
+    name: "Withdrawal Requests",
     icon: <Pending />,
     path: "/admin/withdraw-pending",
     isExpandable: false,
   },
   {
-    name: "Transactions",
+    name: "Transaction Records",
     icon: <ShowChartIcon />,
     isExpandable: true,
     subItems: [
       {
-        name: "Transactions",
+        name: "Financial Transactions",
         path: "/admin/transactions",
         icon: <ShowChartIcon />,
       },
       {
-        name: "SMS Transactions",
+        name: "SMS Logs",
         path: "/admin/transactions/sms",
         icon: <SmsIcon />,
       },
     ],
   },
   {
-    name: "Support Tickets",
+    name: "Support Center",
     path: "/admin/support-tickets",
     icon: <SupportIcon />,
     isExpandable: false,
   },
   {
-    name: "News",
+    name: "News & Updates",
     path: "/admin/news",
     icon: <AnnouncementIcon />,
     isExpandable: false,
   },
   {
-    name: "Holidays",
+    name: "Holiday Calendar",
     path: "/admin/holidays",
     icon: <EventIcon />,
     isExpandable: false,

@@ -27,6 +27,7 @@ import { toast } from "react-toastify";
 import useSearch from "../../../hooks/SearchQuery";
 import { getFormattedDate } from "../../../utils/common";
 
+
 const Holidays = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newHoliday, setNewHoliday] = useState<{
@@ -67,8 +68,8 @@ const Holidays = () => {
           variant="contained"
           onClick={() => setIsModalOpen(true)}
           sx={{
-            backgroundColor: "#7e22ce",
-            "&:hover": { backgroundColor: "#7e22ce" },
+            backgroundColor: "#2c8786",
+            "&:hover": { backgroundColor: "#2c8786" },
           }}
         >
           Add Holiday
@@ -81,7 +82,7 @@ const Holidays = () => {
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
               sx={{
-                backgroundColor: "#7e22ce",
+                backgroundColor: "#2c8786",
                 color: "#fff",
                 "& .MuiSvgIcon-root": { color: "#fff" },
               }}
@@ -111,7 +112,7 @@ const Holidays = () => {
                 pagination
                 progressPending={isLoading || updateHoliday.isPending}
                 progressComponent={
-                  <CircularProgress size={"4rem"} sx={{ color: "#7e22ce" }} />
+                  <CircularProgress size={"4rem"} sx={{ color: "#2c8786" }} />
                 }
                 customStyles={DASHBOARD_CUTSOM_STYLE}
                 paginationPerPage={25}

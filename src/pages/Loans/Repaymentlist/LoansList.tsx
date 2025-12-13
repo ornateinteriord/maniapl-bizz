@@ -238,8 +238,8 @@ export default function LoansList() {
             onClick={handleSearch}
             sx={{
               textTransform: 'capitalize',
-              backgroundColor: '#7e22ce',
-              '&:hover': { backgroundColor: '#6b21a8' },
+              backgroundColor: '#2c8786',
+              '&:hover': { backgroundColor: '#2c8786' },
             }}
           >
             Search
@@ -253,7 +253,7 @@ export default function LoansList() {
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
               sx={{
-                backgroundColor: '#7e22ce',
+                backgroundColor: '#2c8786',
                 color: '#fff',
                 '& .MuiSvgIcon-root': { color: '#fff' },
               }}
@@ -290,7 +290,7 @@ export default function LoansList() {
                   <TableContainer component={Paper}>
                     <Table>
                       <TableHead>
-                        <TableRow sx={{ backgroundColor: '#7e22ce' }}>
+                        <TableRow sx={{ backgroundColor: '#2c8786' }}>
                           {columns.map((col) => (
                             <TableCell key={col.name} sx={{ color: 'white', fontWeight: 'bold' }}>
                               {col.sortable ? (
@@ -355,7 +355,7 @@ export default function LoansList() {
         <DialogTitle 
           sx={{ 
             textAlign: 'center',
-            color: '#7e22ce',
+            color: '#2c8786',
             fontWeight: 'bold',
             fontSize: '1.5rem',
             pb: 1
@@ -452,7 +452,7 @@ export default function LoansList() {
                     borderColor: '#d1d5db',
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#6b21a8',
+                    borderColor: '#2c8786',
                   },
                 }}
               >
@@ -494,7 +494,7 @@ export default function LoansList() {
 
           {isCreatingOrder && (
             <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <CircularProgress size={20} sx={{ color: '#6b21a8' }} />
+              <CircularProgress size={20} sx={{ color: '#2c8786' }} />
               <Typography variant="body2" sx={{ color: '#6b7280', mt: 1 }}>
                 Processing your payment...
               </Typography>
@@ -532,7 +532,7 @@ export default function LoansList() {
             variant="contained"
             disabled={isCreatingOrder || getFinalRepayAmount() === 0 || getFinalRepayAmount() < 500}
             sx={{
-              background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
+              background: 'linear-gradient(135deg, #2c8786 0%, #a855f7 100%)',
               '&:hover': {
                 background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)',
                 boxShadow: '0 4px 12px rgba(107, 33, 168, 0.3)',

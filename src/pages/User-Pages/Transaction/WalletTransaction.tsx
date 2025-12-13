@@ -94,7 +94,7 @@ const WalletTransaction = () => {
   if (isLoading) {
     return (
       <Card sx={{ margin: "2rem", mt: 10, textAlign: "center", p: 3 }}>
-        <CircularProgress size={"4rem"} sx={{ color: "#7e22ce" }} />
+        <CircularProgress size={"4rem"} sx={{ color: "#2c8786" }} />
       </Card>
     );
   }
@@ -106,7 +106,7 @@ const WalletTransaction = () => {
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
-              backgroundColor: "#7e22ce",
+              backgroundColor: "#2c8786",
               color: "#fff",
               "& .MuiSvgIcon-root": { color: "#fff" },
             }}

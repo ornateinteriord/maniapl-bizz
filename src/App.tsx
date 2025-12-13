@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import "./App.css";
 import "./index.css";
+import "./pages/Dashboard/dashboard.scss";
 import { Dialog, DialogContent, CircularProgress } from "@mui/material";
 
 import Members, {
@@ -154,10 +155,7 @@ function App() {
   return (
     <UserProvider>
       <QueryClientProvider client={queryClient}>
-      <ToastContainer           
-          toastClassName="bg-white shadow-lg rounded-lg p-4"
-          className="text-sm text-gray-800"
-          style={{ width: 'auto', minWidth: '25rem' }} />
+      <ToastContainer />
         <Router>
           <Suspense fallback={<LoadingComponent />}>
             <RoutesProvider

@@ -135,7 +135,7 @@ const Wallet = () => {
           minHeight: "200px",
         }}
       >
-        <CircularProgress sx={{ color: "#7e22ce" }} />
+        <CircularProgress sx={{ color: "#2c8786" }} />
       </Card>
     );
   }
@@ -167,7 +167,7 @@ const Wallet = () => {
                     backgroundColor: "#f5f5f5",
                     borderRadius: 2,
                     textAlign: "center",
-                    border: `2px solid ${isWithdrawalAllowed ? "#7e22ce" : "#ff9800"}`,
+                    border: `2px solid ${isWithdrawalAllowed ? "#2c8786" : "#ff9800"}`,
                     position: "relative",
                     opacity: isWithdrawalAllowed ? 1 : 0.7,
                   }}
@@ -180,7 +180,7 @@ const Wallet = () => {
                         right: 8,
                       }}
                     >
-                      <CircularProgress size={20} sx={{ color: "#7e22ce" }} />
+                      <CircularProgress size={20} sx={{ color: "#2c8786" }} />
                     </Box>
                   )}
                   <Typography variant="subtitle1" color="textSecondary">
@@ -189,7 +189,7 @@ const Wallet = () => {
                   <Typography
                     variant="h4"
                     sx={{ 
-                      color: isWithdrawalAllowed ? "#7e22ce" : "#ff9800", 
+                      color: isWithdrawalAllowed ? "#2c8786" : "#ff9800", 
                       mt: 1, 
                       fontWeight: "bold" 
                     }}
@@ -212,7 +212,7 @@ const Wallet = () => {
                   {withdrawMutation.isPending && (
                     <Typography
                       variant="caption"
-                      sx={{ color: "#7e22ce", mt: 1, display: "block" }}
+                      sx={{ color: "#2c8786", mt: 1, display: "block" }}
                     >
                       Updating...
                     </Typography>
@@ -235,7 +235,7 @@ const Wallet = () => {
                   </Typography>
                   <Typography
                     variant="h4"
-                    sx={{ color: "#7e22ce", mt: 1, fontWeight: "bold" }}
+                    sx={{ color: "#2c8786", mt: 1, fontWeight: "bold" }}
                   >
                     {walletData?.totalIncome ? `₹${walletData?.totalIncome}` : "₹0.00"}
                   </Typography>
@@ -257,7 +257,7 @@ const Wallet = () => {
                   </Typography>
                   <Typography
                     variant="h4"
-                    sx={{ color: "#7e22ce", mt: 1, fontWeight: "bold" }}
+                    sx={{ color: "#2c8786", mt: 1, fontWeight: "bold" }}
                   >
                     {walletData?.totalWithdrawal ? `₹${walletData?.totalWithdrawal}` : "₹0.00"}
                   </Typography>
@@ -281,7 +281,7 @@ const Wallet = () => {
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
-              backgroundColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800",
+              backgroundColor: isWithdrawalAllowed ? "#2c8786" : "#ff9800",
               color: "#fff",
               "& .MuiSvgIcon-root": { color: "#fff" },
               minHeight: isMobile ? "48px" : "64px",
@@ -306,8 +306,8 @@ const Wallet = () => {
                 InputProps={{ readOnly: true }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    "&:hover fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
-                    "&.Mui-focused fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
+                    "&:hover fieldset": { borderColor: isWithdrawalAllowed ? "#2c8786" : "#ff9800" },
+                    "&.Mui-focused fieldset": { borderColor: isWithdrawalAllowed ? "#2c8786" : "#ff9800" },
                   },
                 }}
               />
@@ -350,8 +350,8 @@ const Wallet = () => {
                 InputProps={{ readOnly: true }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    "&:hover fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
-                    "&.Mui-focused fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
+                    "&:hover fieldset": { borderColor: isWithdrawalAllowed ? "#2c8786" : "#ff9800" },
+                    "&.Mui-focused fieldset": { borderColor: isWithdrawalAllowed ? "#2c8786" : "#ff9800" },
                   },
                 }}
               />
@@ -364,8 +364,8 @@ const Wallet = () => {
                 InputProps={{ readOnly: true }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    "&:hover fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
-                    "&.Mui-focused fieldset": { borderColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800" },
+                    "&:hover fieldset": { borderColor: isWithdrawalAllowed ? "#2c8786" : "#ff9800" },
+                    "&.Mui-focused fieldset": { borderColor: isWithdrawalAllowed ? "#2c8786" : "#ff9800" },
                   },
                 }}
               />
@@ -418,7 +418,7 @@ const Wallet = () => {
                     !isWithdrawalAllowed
                   }
                   sx={{
-                    backgroundColor: isWithdrawalAllowed ? "#7e22ce" : "#ff9800",
+                    backgroundColor: isWithdrawalAllowed ? "#2c8786" : "#ff9800",
                     minWidth: "120px",
                     "&:hover": { 
                       backgroundColor: isWithdrawalAllowed ? "#581c87" : "#f57c00" 
@@ -451,7 +451,7 @@ const Wallet = () => {
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
-              backgroundColor: "#7e22ce",
+              backgroundColor: "#2c8786",
               color: "#fff",
               "& .MuiSvgIcon-root": { color: "#fff" },
               minHeight: isMobile ? "48px" : "64px",

@@ -108,7 +108,7 @@ const MembersUpdateForm: React.FC = () => {
             variant="contained"
             onClick={handleSubmit}
             sx={{
-              backgroundColor: "#7e22ce",
+              backgroundColor: "#2c8786",
               alignSelf: "flex-end",
               "&:hover": { backgroundColor: "#581c87" },
             }}

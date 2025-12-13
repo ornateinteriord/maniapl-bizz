@@ -36,7 +36,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
     return (
       <Card
         sx={{
-          background: 'linear-gradient(to right, #4f9de8, #a67bd5)',
+          background: 'linear-gradient(to right, #2c8786, #3da1a0)',
           color: '#fff',
           borderRadius: '10px',
           padding: { xs: '6px', sm: '8px' },
@@ -143,7 +143,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
               minWidth: '120px'
             }}
           >
-            {getRepayButtonText()}
+          {getRepayButtonText()}
           </Button>
         </CardContent>
       </Card>
@@ -153,7 +153,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   return (
     <Card
       sx={{
-        background: 'linear-gradient(to right, #4f9de8, #a67bd5)',
+        background: 'linear-gradient(to right, #2c8786, #3da1a0)',
         color: '#fff',
         borderRadius: '10px',
         padding: { xs: '12px', sm: '16px' },

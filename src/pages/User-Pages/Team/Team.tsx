@@ -21,7 +21,7 @@ const Team = () => {
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
-              backgroundColor: '#6b21a8',
+              backgroundColor: '#2c8786',
               color: '#fff',
               '& .MuiSvgIcon-root': { color: '#fff' }
             }}

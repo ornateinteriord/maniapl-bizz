@@ -21,7 +21,7 @@ const { data = [] } = useGetDailyPayout(memberId);
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{
-              backgroundColor: '#7e22ce',
+              backgroundColor: '#2c8786',
               color: '#fff',
               '& .MuiSvgIcon-root': { color: '#fff' }
             }}

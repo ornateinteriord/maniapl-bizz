@@ -98,8 +98,8 @@ export const TransactionDataTable = ({
           <Button
             variant="contained"
             sx={{
-              backgroundColor: "#7e22ce",
-              "&:hover": { backgroundColor: "#7e22ce" },
+              backgroundColor: "#2c8786",
+              "&:hover": { backgroundColor: "#2c8786" },
             }}
           >
             Search
@@ -112,7 +112,7 @@ export const TransactionDataTable = ({
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
               sx={{
-                backgroundColor: "#7e22ce",
+                backgroundColor: "#2c8786",
                 color: "#fff",
                 "& .MuiSvgIcon-root": { color: "#fff" },
               }}
@@ -144,7 +144,7 @@ export const TransactionDataTable = ({
                 paginationPerPage={25}
                 progressPending={isLoading}
                 progressComponent={
-                  <CircularProgress size={"4rem"} sx={{ color: "#7e22ce" }}/>
+                  <CircularProgress size={"4rem"} sx={{ color: "#2c8786" }}/>
                 }
                 paginationRowsPerPageOptions={[25, 50, 100]}
                 highlightOnHover

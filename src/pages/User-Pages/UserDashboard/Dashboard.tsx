@@ -20,7 +20,6 @@ import {
   MenuItem,
   CircularProgress
 } from '@mui/material';
-import { cn } from '../../../lib/utils';
 import '../../Dashboard/dashboard.scss';
 import DashboardTable from '../../Dashboard/DashboardTable';
 import { MuiDatePicker } from '../../../components/common/DateFilterComponent';
@@ -383,60 +382,136 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
         </Box>
       )}
 
-      <div className="h-auto md:h-40 relative w-full overflow-hidden bg-[#6b21a8] flex flex-col items-center justify-center mt-10 py-6 md:py-0">
-        <div className="absolute inset-0 w-full h-full z-20 [mask-image:radial-gradient(transparent,white)] pointer-events-none" />
+    <Box
+      sx={{
+        height: { xs: 'auto', md: '100px' },
+        width: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mt: { xs: 6, md: 8 },
+        py: { xs: 6, md: 0 },
+        backgroundColor: "#299592",
+        position: 'relative'
+      }}
+    >
+      <Box 
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 20,
+          pointerEvents: 'none',
+          maskImage: 'radial-gradient(transparent,black)'
+        }} 
+      />
 
-        <div className="flex flex-col md:flex-row justify-evenly items-center w-full px-4 md:px-8 relative z-20 gap-6 md:gap-0">
-          <div className="text-center md:text-left">
-            <h1 className={cn("text-xl md:text-4xl text-white")}>
-              Welcome to Dashboard
-            </h1>
-            <p className="mt-2 text-neutral-300 text-sm md:text-base">
-              Manage your network and track your success
-            </p>
-          </div>
+      <Box 
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: 'space-evenly',
+          alignItems: 'center',
+          width: '100%',
+          px: { xs: 4, md: 8 },
+          position: 'relative',
+          zIndex: 20,
+          gap: { xs: 6, md: 0 }
+        }}
+      >
+        <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+          <Typography 
+            variant="h4"
+            sx={{ 
+              color: 'white',
+              fontSize: { xs: '1.5rem', md: '2.5rem' }
+            }}
+          >
+            Welcome to Dashboard
+          </Typography>
+          <Typography 
+            variant="body1"
+            sx={{ 
+              mt: 2, 
+              color: '#ffff', 
+              fontSize: { xs: '0.875rem', md: '1rem' } ,
+              textAlign: 'center'
+            }}
+          >
+            Manage your network and track your success
+          </Typography>
+        </Box>
 
-          <div className="flex items-center gap-6 md:gap-12 text-white">
-            <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">{memberDetails ? `${memberDetails.direct_referrals?.length || 0}/${memberDetails.direct_referrals?.length || 0}` : '—'}</div>
-              <div className="text-xs md:text-sm flex items-center justify-center gap-1">
-                <span className="material-icons text-base md:text-lg">person</span>
-                Direct
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">{memberDetails ? `${memberDetails.total_team || 0}/${memberDetails.total_team || 0}` : '—'}</div>
-              <div className="text-xs md:text-sm flex items-center justify-center gap-1">
-                <span className="material-icons text-base md:text-lg">groups</span>
-                Team
-              </div>
-            </div>
-          </div>
+        <Box 
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: { xs: 6, md: 12 },
+            color: 'white'
+          }}
+        >
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography 
+              variant="h4"
+              sx={{ 
+                fontSize: { xs: '1.25rem', md: '1.5rem' }, 
+                fontWeight: 'bold', 
+                mb: 2 
+              }}
+            >
+              {memberDetails ? `${memberDetails.direct_referrals?.length || 0}/${memberDetails.direct_referrals?.length || 0}` : '—'}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <span className="material-icons text-base md:text-lg">person</span>
+              <Typography variant="caption">Direct</Typography>
+            </Box>
+          </Box>
+          
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography 
+              variant="h4"
+              sx={{ 
+                fontSize: { xs: '1.25rem', md: '1.5rem' }, 
+                fontWeight: 'bold', 
+                mb: 2 
+              }}
+            >
+              {memberDetails ? `${memberDetails.total_team || 0}/${memberDetails.total_team || 0}` : '—'}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <span className="material-icons text-base md:text-lg">groups</span>
+              <Typography variant="caption">Team</Typography>
+            </Box>
+          </Box>
+        </Box>
 
-          {/* Show status button when Processing or Approved, otherwise show Claim Reward if eligible */}
-          {hasProcessingOrApprovedStatus ? (
-            <div className="flex justify-center mt-4">
-              <Button
-                variant="contained"
-                sx={getButtonStyle(statusButtonText, true)}
-                disabled
-              >
-                {statusButtonText}
-              </Button>
-            </div>
-          ) : sponsorRewardData?.isEligibleForReward ? (
-            <div className="flex justify-center mt-4">
-              <Button
-                variant="contained"
-                onClick={handleClaimReward}
-                sx={getButtonStyle('claim', false)}
-              >
-                Claim Reward
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      </div>
+        {/* Show status button when Processing or Approved, otherwise show Claim Reward if eligible */}
+        {hasProcessingOrApprovedStatus ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Button
+              variant="contained"
+              sx={getButtonStyle(statusButtonText, true)}
+              disabled
+            >
+              {statusButtonText}
+            </Button>
+          </Box>
+        ) : sponsorRewardData?.isEligibleForReward ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Button
+              variant="contained"
+              onClick={handleClaimReward}
+              sx={getButtonStyle('claim', false)}
+            >
+              Claim Reward
+            </Button>
+          </Box>
+        ) : null}
+      </Box>
+    </Box>
 
       {/* Referral Link Box */}
       <Box 
@@ -447,14 +522,14 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
           backgroundColor: '#f8f5ff',
           borderRadius: 2,
           border: '1px solid #e9d5ff',
-          boxShadow: '0 2px 8px rgba(107, 33, 168, 0.1)',
+          boxShadow: '0 2px 8px rgba(44, 135, 134, 0.1)',
         }}
       >
         <Typography 
           variant="h6" 
           sx={{ 
             mb: 1, 
-            color: '#7e22ce',
+            color: '#2c8786',
             fontWeight: 'bold',
             textAlign: 'center'
           }}
@@ -483,7 +558,7 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
               target="_blank" 
               rel="noopener noreferrer"
               sx={{
-                color: '#6b21a8',
+                color: '#2c8786',
                 textDecoration: 'none',
                 '&:hover': {
                   textDecoration: 'underline',
@@ -501,7 +576,7 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
               <Typography 
                 variant="body2" 
                 sx={{ 
-                  color: '#6b21a8',
+                  color: '#2c8786',
                   fontWeight: 'medium',
                 }}
               >
@@ -528,10 +603,10 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
               onClick={handleCopyReferralLink}
               disabled={!memberDetails?.Member_id}
               sx={{
-                backgroundColor: '#6b21a8',
+                backgroundColor: '#2c8786',
                 color: 'white',
                 '&:hover': {
-                  backgroundColor: '#581c87',
+                  backgroundColor: '#236d6c',
                 },
                 fontWeight: 'bold',
                 textTransform: 'none',
@@ -547,11 +622,11 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
               onClick={handleShareReferralLink}
               disabled={!memberDetails?.Member_id}
               sx={{
-                borderColor: '#6b21a8',
-                color: '#6b21a8',
+                borderColor: '#2c8786',
+                color: '#2c8786',
                 '&:hover': {
                   backgroundColor: '#f3e8ff',
-                  borderColor: '#581c87',
+                  borderColor: '#236d6c',
                 },
                 fontWeight: 'bold',
                 textTransform: 'none',
@@ -569,7 +644,7 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
             display: 'block',
             textAlign: 'center',
             mt: 1,
-            color: '#6b21a8',
+            color: '#2c8786',
             opacity: 0.8
           }}
         >
@@ -641,7 +716,7 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
           id="claim-reward-dialog-title"
           sx={{ 
             textAlign: 'center',
-            color: '#7e22ce',
+            color: '#2c8786',
             fontWeight: 'bold',
             fontSize: '1.5rem',
             pb: 1
@@ -702,8 +777,8 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
             disabled={isClaiming}
             sx={{
               textTransform: 'capitalize',
-              backgroundColor: '#DDAC17',
-              '&:hover': { backgroundColor: '#Ecc440' },
+              backgroundColor: '#2c8786',
+              '&:hover': { backgroundColor: '#236d6c' },
               fontWeight: 'bold',
               px: 4,
             }}
@@ -730,7 +805,7 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
         <DialogTitle 
           sx={{ 
             textAlign: 'center',
-            color: '#7e22ce',
+            color: '#2c8786',
             fontWeight: 'bold',
             fontSize: '1.5rem',
             pb: 1
@@ -822,7 +897,7 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
                   borderColor: '#d1d5db',
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#6b21a8',
+                  borderColor: '#2c8786',
                 },
               }}
             >
@@ -842,7 +917,7 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
 
           {isRepaying && (
             <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <CircularProgress size={20} sx={{ color: '#6b21a8' }} />
+              <CircularProgress size={20} sx={{ color: '#2c8786' }} />
               <Typography variant="body2" sx={{ color: '#6b7280', mt: 1 }}>
                 Initializing payment...
               </Typography>
@@ -880,10 +955,10 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
             variant="contained"
             disabled={isRepaying || selectedRepayAmount === 0}
             sx={{
-              background: 'linear-gradient(135deg, #6b21a8 0%, #a855f7 100%)',
+              background: 'linear-gradient(135deg, #2c8786 0%, #3da1a0 100%)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #581c87 0%, #9333ea 100%)',
-                boxShadow: '0 4px 12px rgba(107, 33, 168, 0.3)',
+                background: 'linear-gradient(135deg, #236d6c 0%, #2c8786 100%)',
+                boxShadow: '0 4px 12px rgba(44, 135, 134, 0.3)',
               },
               textTransform: 'capitalize',
               fontWeight: 600,
@@ -898,22 +973,22 @@ const dueAmount = lastCompletedRepayment?.repayment_context?.new_due_amount
       </Dialog>
 
       {/* Member Statistics */}
-      <div className='mt-10 p-4 rounded shadow'>    
-        <Card className='bg-gray-300'>
+      <Box sx={{ mt: 10, p: 4, borderRadius: 2, boxShadow: 2 }}>    
+        <Card sx={{ backgroundColor: '#f5f5f5' }}>
           <CardContent>
-            <div className="flex justify-between items-center mb-4">
-              <Typography variant="h6" style={{ fontWeight: 'bold', color: '#7e22ce' }}>Member Statistics</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2c8786' }}>Member Statistics</Typography>
               <MuiDatePicker
                 date={selectedDate}
                 setDate={handleDateChange}
                 label="Filter by Date"
               />
-            </div>
+            </Box>
 
             <DashboardTable data={tableData} columns={getUserDashboardTableColumns()} />
           </CardContent>
         </Card>
-      </div>
+      </Box>
     </>
   );
 }

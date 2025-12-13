@@ -1,6 +1,5 @@
-import { Card, CardContent, Grid, Typography } from '@mui/material';
-import { cn } from '../../../lib/utils';
-import '../../Dashboard/dashboard.scss';
+import { Card, CardContent, Grid, Typography, Box, Container } from '@mui/material';
+import { useGetAllMembersDetails } from '../../../api/Admin';
 import DashboardTable from '../../Dashboard/DashboardTable';
 import DashboardCard from '../../../components/common/DashboardCard';
 import { getAdminDashboardTableColumns } from '../../../utils/DataTableColumnsProvider';
@@ -9,7 +8,6 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import EventIcon from '@mui/icons-material/Event';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SchoolIcon from '@mui/icons-material/School';
-import { useGetAllMembersDetails } from '../../../api/Admin';
 
 const AdminDashboard = () => { 
   const { data: members = [], isLoading, error } = useGetAllMembersDetails();
@@ -36,70 +34,168 @@ const pendingMembers = members.filter((member: any) =>
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Typography>Loading dashboard data...</Typography>
-      </div>
+      <Box display="flex" justifyContent="center" alignItems="center" height="64vh">
+        <Typography variant="h6">Loading dashboard data...</Typography>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <Box display="flex" justifyContent="center" alignItems="center" height="64vh">
         <Typography color="error">
-          Error loading dashboard data: {error.message}
+          Error loading dashboard data: {(error as Error).message}
         </Typography>
-      </div>
+      </Box>
     );
   }
 
   return (
-    <>
-      <div className="h-auto md:h-40 relative w-full overflow-hidden bg-[#6b21a8] flex flex-col items-center justify-center mt-10 py-6 md:py-0">
-        <div className="absolute inset-0 w-full h-full bg-[#6b21a8] z-20 [mask-image:radial-gradient(transparent,white)] pointer-events-none" />
-
-        <div className="flex flex-col md:flex-row justify-evenly items-center w-full px-4 md:px-8 relative z-20 gap-6 md:gap-0">
-          <div className="text-center md:text-left">
-            <h1 className={cn("text-xl md:text-4xl text-white")}>
+    <Container maxWidth={false} sx={{ padding: 0 }}>
+      {/* Dashboard Header */}
+      <Box 
+        sx={{
+          height: { xs: 'auto', md: '40' },
+          width: '100%',
+          overflow: 'hidden',
+          bgcolor: '#2c8786',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mt: 10,
+          py: { xs: 6, md: 0 }
+        }}
+      >
+        <Box 
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            bgcolor: '#2c8786',
+            zIndex: 20,
+            pointerEvents: 'none',
+            maskImage: 'radial-gradient(transparent,white)'
+          }} 
+        />
+        
+        <Box 
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-evenly',
+            alignItems: 'center',
+            width: '100%',
+            px: { xs: 4, md: 8 },
+            position: 'relative',
+            zIndex: 20,
+            gap: { xs: 6, md: 0 }
+          }}
+        >
+          <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+            <Typography 
+              variant="h4" 
+              sx={{ 
+                color: 'white',
+                fontSize: { xs: '1.5rem', md: '2.5rem' }
+              }}
+            >
               Welcome to Admin Dashboard
-            </h1>
-            <p className="mt-2 text-neutral-300 text-sm md:text-base">
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                mt: 2, 
+                color: 'neutral.300', 
+                fontSize: { xs: '0.875rem', md: '1rem' } 
+              }}
+            >
               Manage your network and track your success
-            </p>
-          </div>
+            </Typography>
+          </Box>
 
-          <div className="grid grid-cols-2 md:flex items-center gap-6 md:gap-12 text-white">
-            <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">{totalLikes}k</div>
-              <div className="text-xs md:text-sm flex items-center justify-center gap-1">
+          <Box 
+            sx={{
+              display: { xs: 'grid', md: 'flex' },
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              alignItems: 'center',
+              gap: { xs: 6, md: 12 },
+              color: 'white'
+            }}
+          >
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontSize: { xs: '1.25rem', md: '1.5rem' }, 
+                  fontWeight: 'bold', 
+                  mb: 2 
+                }}
+              >
+                {totalLikes}k
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                 <ThumbUpIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
-                Great
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">{totalDegrees}</div>
-              <div className="text-xs md:text-sm flex items-center justify-center gap-1">
+                <Typography variant="caption">Great</Typography>
+              </Box>
+            </Box>
+            
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontSize: { xs: '1.25rem', md: '1.5rem' }, 
+                  fontWeight: 'bold', 
+                  mb: 2 
+                }}
+              >
+                {totalDegrees}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                 <SchoolIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
-                Degrees
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">{totalEvents}</div>
-              <div className="text-xs md:text-sm flex items-center justify-center gap-1">
+                <Typography variant="caption">Degrees</Typography>
+              </Box>
+            </Box>
+            
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontSize: { xs: '1.25rem', md: '1.5rem' }, 
+                  fontWeight: 'bold', 
+                  mb: 2 
+                }}
+              >
+                {totalEvents}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                 <EventIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
-                Events
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl md:text-2xl font-bold mb-2">{totalCities}</div>
-              <div className="text-xs md:text-sm flex items-center justify-center gap-1">
+                <Typography variant="caption">Events</Typography>
+              </Box>
+            </Box>
+            
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontSize: { xs: '1.25rem', md: '1.5rem' }, 
+                  fontWeight: 'bold', 
+                  mb: 2 
+                }}
+              >
+                {totalCities}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                 <LocationOnIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
-                Cities
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                <Typography variant="caption">Cities</Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
       
+      {/* Dashboard Cards */}
       <Grid 
         container 
         spacing={{ xs: 2, sm: 3 }} 
@@ -140,22 +236,23 @@ const pendingMembers = members.filter((member: any) =>
         </Grid>
       </Grid>
       
-      <div className='mt-10 p-4 rounded shadow'>    
-        <Card className='bg-gray-300'>
+      {/* Member Statistics Table */}
+      <Box sx={{ mt: 10, p: 4, borderRadius: 1, boxShadow: 2 }}>
+        <Card>
           <CardContent>
-            <div className="flex justify-between items-center mb-4">
-              <Typography variant="h6" style={{ fontWeight: 'bold', color: '#7e22ce' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2c8786' }}>
                 Member Statistics ({sortedMembers.length} members)
               </Typography>
-            </div>
+            </Box>
             <DashboardTable 
               data={sortedMembers} 
               columns={getAdminDashboardTableColumns()} 
             />
           </CardContent>
         </Card>
-      </div>
-    </>
+      </Box>
+    </Container>
   )
 }
 

@@ -1,11 +1,4 @@
-import {
-  ChevronDown,
-  Lock,
-  LogOutIcon,
-  MenuIcon,
-  Settings,
-  User,
-} from "lucide-react";
+import { ChevronDown, Lock, LogOut, Menu, Settings, User } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import "./navbar.scss";
 import {
@@ -13,7 +6,7 @@ import {
   Avatar,
   Divider,
   IconButton,
-  Menu,
+  Menu as MuiMenu,
   MenuItem,
   Toolbar,
   Typography,
@@ -68,13 +61,13 @@ const Navbar = ({
         position="fixed"
         className="navbar"
         style={{
-          background: "#6b21a8",
+          background: "#2c8786",
         }}
       >
         <Toolbar className="navbar-toolbar">
           {!shouldHide && (
             <IconButton onClick={() => toggelSideBar()}>
-              <MenuIcon color="white" />
+              <Menu color="white" />
             </IconButton>
           )}
           <Typography
@@ -118,10 +111,10 @@ const Navbar = ({
                   <Button
                     className="logout-btn"
                     variant="ghost"
-                    style={{ marginRight: "8px", fontSize: "50px" }}
+                    style={{ marginRight: "8px", fontSize: "50px",cursor:'pointer',borderRadius:'6px' }}
                     onClick={handleLogout}
                   >
-                    <LogOutIcon />
+                    <LogOut />
                   </Button>
                 )}
               </div>
@@ -132,7 +125,7 @@ const Navbar = ({
         </Toolbar>
 
         {/* Dropdown Menu */}
-        <Menu
+        <MuiMenu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
@@ -187,18 +180,18 @@ const Navbar = ({
 
           <div className="admin-panel-menuitems">
             <MenuItem onClick={handleMenuClose} sx={{ display: "flex" }}>
-              <Lock size={17} style={{ marginRight: "4px", color: "#007bff" }} />
+              <Lock size={17} style={{ marginRight: "4px", color: "#2c8786" }} />
               Lock
             </MenuItem>
             <MenuItem onClick={handleLogout} sx={{ display: "flex" }}>
-              <LogOutIcon
+              <LogOut
                 size={18}
                 style={{ marginRight: "4px", color: "red" }}
               />
               Logout
             </MenuItem>
           </div>
-        </Menu>
+        </MuiMenu>
       </AppBar>
     </>
   );
