@@ -40,14 +40,21 @@ import MembersUpdateForm from "./pages/Admin-Pages/UpdateForms";
 // const Home = lazy(() => import("./pages/Home/Home"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Register = lazy(() => import("./pages/Auth/Register"));
-const RecoverPassword = lazy(()=>import("./pages/Auth/RecoverPassword"))
-const ResetPassword = lazy(()=>import("./pages/Auth/ResetPassword"))
+const RecoverPassword = lazy(() => import("./pages/Auth/RecoverPassword"))
+const ResetPassword = lazy(() => import("./pages/Auth/ResetPassword"))
 const Navbar = lazy(() => import("./pages/Navbar/Navbar"));
 const Sidebar = lazy(() => import("./pages/Sidebar/Sidebar"));
 const NotFound = lazy(() => import("./pages/not-found/NotFound"));
 
+// Public info pages
+const AboutUs = lazy(() => import("./pages/Public/AboutUs"));
+const ContactUs = lazy(() => import("./pages/Public/ContactUs"));
+const PrivacyPolicy = lazy(() => import("./pages/Public/PrivacyPolicy"));
+const RefundPolicy = lazy(() => import("./pages/Public/RefundPolicy"));
+const TermsConditions = lazy(() => import("./pages/Public/TermsConditions"));
+
 // admin pages
-const UpdatePassword = lazy(()=>import("./pages/Admin-Pages/admin-panel/UpdatePassword"));
+const UpdatePassword = lazy(() => import("./pages/Admin-Pages/admin-panel/UpdatePassword"));
 const AdminDashboard = lazy(
   () => import("./pages/Admin-Pages/AdminDashboard/Dashboard")
 );
@@ -139,7 +146,7 @@ export const LoadingComponent = () => {
 
 const ShouldHideSidebarComponent = () => {
   const location = useLocation();
-  const publicPaths = ["/", "/login", "/register","/recover-password","/reset-password"];
+  const publicPaths = ["/", "/login", "/register", "/recover-password", "/reset-password", "/about-us", "/contact-us", "/privacy-policy", "/refund-policy", "/terms-conditions"];
   return publicPaths.includes(location.pathname);
 };
 
@@ -155,14 +162,14 @@ function App() {
   return (
     <UserProvider>
       <QueryClientProvider client={queryClient}>
-      <ToastContainer />
+        <ToastContainer />
         <Router>
           <Suspense fallback={<LoadingComponent />}>
             <RoutesProvider
               isOpen={isOpen}
               setIsOpen={setIsOpen}
               toggelSideBar={toggelSideBar}
-              />
+            />
           </Suspense>
         </Router>
       </QueryClientProvider>
@@ -180,7 +187,7 @@ const RoutesProvider = ({
   toggelSideBar: () => void;
 }) => {
   const shouldHide = ShouldHideSidebarComponent();
-  const {userRole} = useAuth()
+  const { userRole } = useAuth()
 
   return (
     <>
@@ -194,10 +201,10 @@ const RoutesProvider = ({
       >
         {!shouldHide && (
           <Sidebar
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          role={userRole}
-        />
+            isOpen={isOpen}
+            onClose={() => setIsOpen(false)}
+            role={userRole}
+          />
         )}
         <div
           style={{
@@ -215,17 +222,23 @@ const RoutesProvider = ({
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/recover-password" element={<RecoverPassword />} />
-              <Route path="/reset-password" element={<ResetPassword/>} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              {/* Public info pages */}
+              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/contact-us" element={<ContactUs />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
+              <Route path="/terms-conditions" element={<TermsConditions />} />
             </Route>
             {/* admin routes */}
 
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-            <Route path="/admin/update-password" element={<UpdatePassword/>}/>
+              <Route path="/admin/update-password" element={<UpdatePassword />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />{" "}
               {/* admin member routes */}
               <Route path="/admin/members" element={<Members />} />
 
-              
+
               <Route
                 path="/admin/members/pending"
                 element={<PendingMembers />}
@@ -288,9 +301,9 @@ const RoutesProvider = ({
               <Route path="/admin/members/:memberId" element={<MembersUpdateForm />} />
               <Route path="/admin/kyc-approval" element={<KYCApproval />} />
               <Route path="/admin/withdraw-pending" element={<WithdrawPending />} />
-        
+
             </Route>
-             <Route element={<ProtectedRoute allowedRoles={["ADMIN", "USER"]} />}>
+            <Route element={<ProtectedRoute allowedRoles={["ADMIN", "USER"]} />}>
               <Route path="/admin/member/pending" element={<LoansMemberPending />} />
               <Route path="/admin/member/processed" element={<LoansMemberProcessed />} />
               <Route path="/admin/repayments/list" element={<LoansRepaymentsList />} />
@@ -300,7 +313,7 @@ const RoutesProvider = ({
             {/* user routes */}
 
             <Route element={<ProtectedRoute allowedRoles={["USER"]} />}>
-              <Route path="/user/dashboard" element={<UserDashboard />} /> 
+              <Route path="/user/dashboard" element={<UserDashboard />} />
               {/* user account routes */}
               <Route path="/user/account/profile" element={<UserProfile />} />
               <Route path="/user/account/kyc" element={<UserKYC />} />
@@ -341,21 +354,21 @@ const RoutesProvider = ({
                 element={<UserDailyPayout />}
               />
               <Route path="/user/transactions" element={<UserTransaction />} />
-               <Route path="/user/loantransactions" element={<UserLoanTransaction />} />
+              <Route path="/user/loantransactions" element={<UserLoanTransaction />} />
               <Route path="/user/mailbox" element={<UserMailBox />} />
               <Route path="/user/wallet" element={<UserWallet />} />
 
             </Route>
 
-           
+
 
             {/* not found route */}
             <Route
               element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}
             >
-             <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
-              <Route path="*" element={<NotFound />} />
-            </Route>
+              <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
+                <Route path="*" element={<NotFound />} />
+              </Route>
             </Route>
           </Routes>
         </div>
