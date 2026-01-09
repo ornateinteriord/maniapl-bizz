@@ -26,7 +26,7 @@ import { toast } from 'react-toastify';
 
 const WithdrawPending: React.FC = () => {
   const { data: pending = [], isFetching } = useGetPendingWithdrawals();
-  const {  isPending: isApproving } = useApproveWithdrawal();
+  const { isPending: isApproving } = useApproveWithdrawal();
   const { mutate: createPaymentOrder, isPending: isCreatingOrder } = useCreatePaymentOrder();
   const [repayDialogOpen, setRepayDialogOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
@@ -86,7 +86,7 @@ const WithdrawPending: React.FC = () => {
       return;
     }
 
-    // Create Cashfree payment order instead of manual approval
+    // Create payment order for approval
     const paymentData = {
       amount: finalAmount,
       currency: "INR",
@@ -105,7 +105,7 @@ const WithdrawPending: React.FC = () => {
 
     createPaymentOrder(paymentData, {
       onSuccess: () => {
-        // Payment order created successfully, Cashfree checkout will be initialized
+        // Payment order created successfully
         setRepayDialogOpen(false);
         setSelectedTx(null);
       },
@@ -161,7 +161,7 @@ const WithdrawPending: React.FC = () => {
       {/* Repayment Dialog: styled to match LoansList */}
       <Dialog
         open={repayDialogOpen}
-        onClose={() => {!isApproving && !isCreatingOrder && setRepayDialogOpen(false)}}
+        onClose={() => { !isApproving && !isCreatingOrder && setRepayDialogOpen(false) }}
         PaperProps={{
           sx: {
             borderRadius: 3,

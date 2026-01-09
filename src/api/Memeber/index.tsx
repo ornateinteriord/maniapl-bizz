@@ -8,7 +8,14 @@ import axios from "axios";
 import TokenService from "../token/tokenService";
 import { CreateOrderRequest, CreateOrderResponse, VerifyPaymentResponse, PaymentStatus } from "../../types/payments";
 
-// Verify payment status after redirect from Cashfree
+// Declare window for potential future payment SDKs
+declare global {
+  interface Window {
+    // Payment SDK placeholder - add payment gateway types here as needed
+  }
+}
+
+// Verify payment status after redirect from payment gateway
 // This is what the frontend should call after user returns from payment
 export const useVerifyPayment = () => {
   const queryClient = useQueryClient();
@@ -99,39 +106,39 @@ export const useCheckPaymentStatus = (orderId: string | null, enabled: boolean =
 // Process successful loan repayment
 export const useProcessLoanRepayment = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ memberId, transactionId }: { memberId: string; transactionId: string }) => {
       console.log("🔄 Processing loan repayment...", { memberId, transactionId });
-      
+
       const response = await post(`/payments/process-successful-payment`, {
         memberId,
         transactionId
       });
-      
+
       if (!response) throw new Error("No response from server");
-      
+
       const data = response.data || response;
-      
+
       if (data.success === false) {
         throw new Error(data.message || "Failed to process loan repayment");
       }
-      
+
       return data;
     },
-    
+
     onSuccess: (data: any) => {
       console.log("✅ Loan repayment processed:", data);
       toast.success("Loan repayment processed successfully!");
-      
+
       queryClient.invalidateQueries({ queryKey: ["transactionsWithConfig"] });
       queryClient.invalidateQueries({ queryKey: ["walletOverview"] });
       queryClient.invalidateQueries({ queryKey: ["memberDetails"] });
     },
-    
+
     onError: (error: any) => {
       console.error("❌ Failed to process loan repayment:", error);
-      
+
       const message =
         error?.response?.data?.message ||
         error?.message ||
@@ -144,40 +151,40 @@ export const useProcessLoanRepayment = () => {
 // Revert failed loan repayment
 export const useRevertLoanRepayment = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ memberId, transactionId }: { memberId: string; transactionId: string }) => {
       console.log("🔄 Reverting loan repayment...", { memberId, transactionId });
-      
+
       const response = await post(`/payments/process-failed-payment`, {
         memberId,
         transactionId
       });
-      
+
       if (!response) throw new Error("No response from server");
-      
+
       const data = response.data || response;
-      
+
       if (data.success === false) {
         throw new Error(data.message || "Failed to revert loan repayment");
       }
-      
+
       return data;
     },
-    
+
     onSuccess: (data: any) => {
       console.log("✅ Loan repayment reverted:", data);
       toast.info("Payment failed. Loan status reverted.");
-      
+
       queryClient.invalidateQueries({ queryKey: ["transactionsWithConfig"] });
       queryClient.invalidateQueries({ queryKey: ["walletOverview"] });
       queryClient.invalidateQueries({ queryKey: ["memberDetails"] });
     },
-    
+
     onError: (error: any) => {
       console.error("❌ Failed to revert loan repayment:", error);
       console.error("CRITICAL: Failed to revert loan repayment - manual intervention may be required");
-      
+
       const message =
         error?.response?.data?.message ||
         error?.message ||
@@ -187,127 +194,46 @@ export const useRevertLoanRepayment = () => {
   });
 };
 
-// Load Cashfree SDK dynamically
-const loadCashfreeSDK = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    if (window.Cashfree) {
-      console.log("✅ Cashfree SDK already loaded");
-      resolve();
-      return;
-    }
 
-    const script = document.createElement("script");
-    script.src = `https://sdk.cashfree.com/js/v3/cashfree.js`;
 
-    script.onload = () => {
-      console.log("✅ Cashfree SDK loaded successfully");
-      resolve();
-    };
-
-    script.onerror = (error) => {
-      console.error("❌ Failed to load Cashfree SDK:", error);
-      reject(new Error("Failed to load payment system"));
-    };
-
-    document.head.appendChild(script);
-  });
-};
-
-// Initialize Cashfree checkout with environment from backend response
-const initializeCashfreeCheckout = async (
-  paymentSessionId: string,
-  cashfreeEnv: "sandbox" | "production"
-): Promise<void> => {
-  try {
-    console.log("🚀 Initializing Cashfree checkout...");
-    console.log("🔄 Using Cashfree environment from backend:", cashfreeEnv);
-
-    // Ensure SDK is loaded
-    await loadCashfreeSDK();
-
-    if (!window.Cashfree) {
-      throw new Error("Cashfree SDK not available after loading");
-    }
-
-    // IMPORTANT: Use the environment from backend to ensure consistency
-    const cashfree = new window.Cashfree({
-      mode: cashfreeEnv,
-    });
-
-    console.log("💳 Starting checkout with paymentSessionId:", paymentSessionId);
-
-    const result = await cashfree.checkout({
-      paymentSessionId,
-      redirectTarget: "_self",
-    });
-
-    console.log("💰 Payment checkout completed:", result);
-
-  } catch (error: any) {
-    console.error("❌ Payment checkout error:", error);
-
-    let errorMessage = "Payment initialization failed";
-    if (error?.message?.includes("network")) {
-      errorMessage = "Network error. Please check your connection and try again.";
-    } else if (error?.message?.includes("400")) {
-      errorMessage = "Invalid payment session. Please try again.";
-    } else if (error?.message) {
-      errorMessage = error.message;
-    }
-
-    toast.error(errorMessage);
-    throw error;
-  }
-};
-
-// Create Cashfree repayment order and return redirect/payment link
+// Create payment order and return redirect/payment link
 export const useCreatePaymentOrder = () => {
   return useMutation({
     mutationFn: async (paymentData: CreateOrderRequest): Promise<CreateOrderResponse> => {
       console.log("🔄 Creating payment order...", paymentData);
-      
+
       const response = await post(`/payments/create-order`, paymentData);
-      
+
       if (!response) throw new Error("No response from server");
-      
+
       const data = response.data || response;
-      
+
       console.log("📥 Backend response:", data);
-      
+
       if (data.success === false) {
         throw new Error(data.message || "Payment order creation failed");
       }
-      
+
       if (!data.payment_session_id) {
         console.error("❌ Missing payment_session_id:", data);
         throw new Error("Invalid payment order response - missing payment_session_id");
       }
-      
+
       return data;
     },
-    
-    onSuccess: async (data: CreateOrderResponse) => {
+
+    onSuccess: (data: CreateOrderResponse) => {
       console.log("✅ Payment order created successfully:", data);
-
-      try {
-        // Use cashfree_env from backend to ensure environment consistency
-        const cashfreeEnv = data.cashfree_env || "sandbox";
-        console.log("🔄 Using Cashfree environment:", cashfreeEnv);
-
-        await initializeCashfreeCheckout(data.payment_session_id, cashfreeEnv);
-        toast.success("Redirecting to payment gateway...");
-      } catch (error) {
-        console.error("❌ Failed to initialize payment checkout:", error);
-        // Error is already handled in initializeCashfreeCheckout
-      }
+      toast.success("Payment order created successfully!");
+      // Payment processing will be handled by the backend
     },
-    
+
     onError: (error: any) => {
       console.error("❌ Failed to create payment order:", error);
       console.error("❌ Error details:", error.response?.data);
-      
+
       let message = "Unable to initialize payment";
-      
+
       if (error.response?.data?.code === "payment_session_id_invalid") {
         message = "Payment session is invalid or expired. Please try again.";
       } else if (error.response?.data?.code === "order_meta.return_url_invalid") {
@@ -315,7 +241,7 @@ export const useCreatePaymentOrder = () => {
       } else {
         message = error?.response?.data?.message || error?.message || message;
       }
-      
+
       toast.error(message);
     },
   });
@@ -326,13 +252,13 @@ export const useRepayLoan = () => {
   const createPaymentOrder = useCreatePaymentOrder();
 
   return useMutation({
-    mutationFn: async ({ memberId, amount, memberDetails }: { 
-      memberId: string; 
+    mutationFn: async ({ memberId, amount, memberDetails }: {
+      memberId: string;
       amount: number;
       memberDetails?: any;
     }) => {
       console.log("💰 Creating loan repayment order...", { memberId, amount });
-      
+
       const paymentData: CreateOrderRequest = {
         amount,
         currency: "INR",
@@ -349,12 +275,12 @@ export const useRepayLoan = () => {
 
       return await createPaymentOrder.mutateAsync(paymentData);
     },
-    
+
     onSuccess: (data: CreateOrderResponse) => {
       console.log("✅ Loan repayment initiated successfully:", data);
       // The actual payment flow is handled in useCreatePaymentOrder's onSuccess
     },
-    
+
     onError: (error: any) => {
       console.error("❌ Loan repayment failed:", error);
       const errorMessage = error?.message || "Failed to process loan repayment";
@@ -381,7 +307,7 @@ export const useGetMemberDetails = (userId: string | null) => {
   });
 };
 
-export const activateMemberPackage = async (memberId:any) => {
+export const activateMemberPackage = async (memberId: any) => {
   try {
     const response = await put(`/user/activate-package/${memberId}`, {});
     console.log("Package Activated:", response.data);
@@ -421,7 +347,7 @@ export const useGetTransactionDetails = (status = "all") => {
     queryKey: ["transactionsWithConfig", status],
     queryFn: async () => {
       const response = await get(`/user/transactions?status=${status}`);
-      
+
       if (response.success) {
         return response;
       } else {
@@ -431,7 +357,7 @@ export const useGetTransactionDetails = (status = "all") => {
   });
 };
 
-export const useGetTicketDetails = (userId:string) => {
+export const useGetTicketDetails = (userId: string) => {
   return useQuery({
     queryKey: ["TicketDetails", userId],
     queryFn: async () => {
@@ -454,13 +380,13 @@ export const useCreateTicket = () => {
       return await post("/user/ticket", ticketData);
     },
     onSuccess: (response) => {
-      if (response.success){
+      if (response.success) {
         toast.success(response.message);
         queryClient.invalidateQueries({ queryKey: ["TicketDetails"] });
         return response.ticket;
       } else {
         throw new Error(response.message);
-      } 
+      }
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to create ticket. Please try again.");
@@ -468,11 +394,11 @@ export const useCreateTicket = () => {
   });
 };
 
-export const getUsedandUnusedPackages = ({memberId , status} : {memberId : string |  null,status : string}) => { 
+export const getUsedandUnusedPackages = ({ memberId, status }: { memberId: string | null, status: string }) => {
   return useQuery({
     queryKey: ["usedAndUnusedPackages", memberId, status],
     queryFn: async () => {
-      const response = await get("/user/epin" ,{ memberId, status } );
+      const response = await get("/user/epin", { memberId, status });
       if (response.success) {
         return response.data;
       } else {
@@ -484,10 +410,10 @@ export const getUsedandUnusedPackages = ({memberId , status} : {memberId : strin
 
 export const useGetSponsers = (memberId: any) => {
   return useQuery({
-    queryKey : ["sponsers",memberId],
-    queryFn : async () => {
+    queryKey: ["sponsers", memberId],
+    queryFn: async () => {
       const response = await get(`/user/sponsers/${memberId}`);
-      if(response.success){
+      if (response.success) {
         return {
           parentUser: response.parentUser,
           sponsoredUsers: response.sponsoredUsers,
@@ -522,10 +448,10 @@ export const useTransferPackage = () => {
 export const useGetPackagehistory = () => {
   const memberId = TokenService.getMemberId();
   return useQuery({
-    queryKey : ["package-history", memberId],
-    queryFn : async () => {
+    queryKey: ["package-history", memberId],
+    queryFn: async () => {
       const response = await get('/user/package-history');
-      if(response.success){
+      if (response.success) {
         return response.epins;
       } else {
         throw new Error(response.message || "Failed to fetch package history");
@@ -538,9 +464,9 @@ export const useCheckSponsorReward = (memberId: any) => {
   return useQuery({
     queryKey: ["checkSponsorReward", memberId],
     queryFn: async () => {
-      if (!memberId) return Promise.resolve({}); 
+      if (!memberId) return Promise.resolve({});
       const response = await get(`/user/check-sponsor-reward/${memberId}`);
-      return response; 
+      return response;
     },
     enabled: !!memberId,
   });
@@ -561,9 +487,9 @@ export const useGetWalletOverview = (memberId: any) => {
   });
 };
 
-export const useWalletWithdraw = (memberId:any) => {
+export const useWalletWithdraw = (memberId: any) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: { memberId: string; amount: string }) => {
       return await post(`user/withdraw/${memberId}`, data);
@@ -581,8 +507,8 @@ export const useWalletWithdraw = (memberId:any) => {
       const errorMessage = error.response?.data?.message || "Failed to process withdrawal";
       toast.error(errorMessage);
     },
-  }); 
-}; 
+  });
+};
 
 export const useGetMultiLevelSponsorship = () => {
   return useQuery({
@@ -630,12 +556,12 @@ export const useActivatePackage = () => {
 export const useImageKitUpload = (username: string) => {
   return useMutation<{ url: string }, Error, File>({
     mutationFn: async (file: File) => {
-      const authRes = await get("/image-kit-auth"); 
+      const authRes = await get("/image-kit-auth");
       const { signature, expire, token } = authRes;
 
       const data = new FormData();
       data.append("file", file);
-      data.append("fileName", username); 
+      data.append("fileName", username);
       data.append("publicKey", import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY);
       data.append("signature", signature);
       data.append("expire", expire);
@@ -654,7 +580,7 @@ export const useImageKitUpload = (username: string) => {
 
 export const useGetPendingWithdrawals = () => {
   return useQuery({
-    queryKey: ["withdrawals", "pending"], 
+    queryKey: ["withdrawals", "pending"],
     queryFn: async () => {
       const response = await get("/user/trasactions/Pending");
       if (response.success) {
@@ -668,7 +594,7 @@ export const useGetPendingWithdrawals = () => {
 
 export const useGetApprovedWithdrawals = () => {
   return useQuery({
-    queryKey: ["withdrawals", "completed"], 
+    queryKey: ["withdrawals", "completed"],
     queryFn: async () => {
       const response = await get("/user/trasactions/Completed");
       if (response.success) {
@@ -682,20 +608,20 @@ export const useGetApprovedWithdrawals = () => {
 
 export const useApproveWithdrawal = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (transactionId: string) => {
       return await put(`/user/approve-withdrawal/${transactionId}`);
     },
     onMutate: async (transactionId) => {
       await queryClient.cancelQueries({ queryKey: ['withdrawals', 'pending'] });
-      
+
       const previousPending = queryClient.getQueryData(['withdrawals', 'pending']);
 
-      queryClient.setQueryData(['withdrawals', 'pending'], (old: any) => 
+      queryClient.setQueryData(['withdrawals', 'pending'], (old: any) =>
         old ? old.filter((t: any) => t.transaction_id !== transactionId) : old
       );
-      
+
       return { previousPending };
     },
     onSuccess: (response) => {
@@ -712,12 +638,12 @@ export const useApproveWithdrawal = () => {
   });
 };
 
-export const useGetlevelbenifits = (memberId: any)=>{
+export const useGetlevelbenifits = (memberId: any) => {
   return useQuery({
-    queryKey:["level-benifits",memberId],
-    queryFn:async()=>{
-      const response = await get (`/user/level-benefits/${memberId}`);
-      if (response.success){
+    queryKey: ["level-benifits", memberId],
+    queryFn: async () => {
+      const response = await get(`/user/level-benefits/${memberId}`);
+      if (response.success) {
         return response.data;
       } else {
         throw new Error(response.message || "Failed to fetch level-benifits data");
@@ -762,7 +688,7 @@ export const useClimeLoan = () => {
   });
 };
 
-// NOTE: Webhooks are handled server-to-server by Cashfree calling our backend.
+// NOTE: Webhooks are handled server-to-server by the payment gateway calling our backend.
 // The frontend should use useVerifyPayment to check payment status after redirect.
 
 // Utility function to handle payment redirect URL parameters
